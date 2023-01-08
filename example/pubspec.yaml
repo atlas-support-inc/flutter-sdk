@@ -32,6 +32,8 @@ dependencies:
   flutter:
     sdk: flutter
 
+  badges:
+
   atlas_support_sdk:
     path: ../
 

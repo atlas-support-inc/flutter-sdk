@@ -11,6 +11,13 @@ dependencies:
   flutter:
     sdk: flutter
 
+  http:
+  web_socket_channel:
+
+  webview_flutter: ^4.0.0
+  webview_flutter_android:
+  webview_flutter_wkwebview:
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -1,4 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:badges/badges.dart';
+import 'package:atlas_support_sdk/watch_atlas_support_stats.dart';
+import 'package:atlas_support_sdk/atlas_support_widget.dart';
+
+const String testAppId = "jbnpaijbo0";
+const String testUserId = "123";
+const String testUserHash = "123";
 
 void main() {
   runApp(const MyApp());
@@ -11,6 +18,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
         // This is the theme of your application.
@@ -49,6 +57,29 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  int _unreadCount = 0;
+  Function? _unsubscribe = null;
+
+  @override
+  void initState() {
+    super.initState();
+    _unsubscribe = watchAtlasSupportStats(
+        appId: testAppId,
+        userId: testUserId,
+        userHash: testUserHash,
+        onStatsChange: (stats) {
+          setState(() {
+            _unreadCount = stats['conversations']
+                .fold(0, (sum, conversation) => sum + conversation['unread']);
+          });
+        });
+  }
+
+  @override
+  void dispose() {
+    _unsubscribe?.call();
+    super.dispose();
+  }
 
   void _incrementCounter() {
     setState(() {
@@ -71,10 +102,31 @@ class _MyHomePageState extends State<MyHomePage> {
     // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
+          // Here we take the value from the MyHomePage object that was created by
+          // the App.build method, and use it to set our appbar title.
+          title: Text(widget.title),
+          actions: <Widget>[
+            Badge(
+                showBadge: _unreadCount > 0,
+                badgeContent: Text(_unreadCount.toString()),
+                position: BadgePosition.topEnd(top: 5, end: 5),
+                child: IconButton(
+                    icon: const Icon(Icons.help),
+                    onPressed: () {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) {
+                        return Scaffold(
+                          appBar: AppBar(
+                            title: const Text('Help'),
+                          ),
+                          body: const AtlasSupportWidget(
+                              appId: testAppId,
+                              userId: testUserId,
+                              userHash: testUserHash),
+                        );
+                      }));
+                    }))
+          ]),
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
