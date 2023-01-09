@@ -11,29 +11,54 @@ and the Flutter guide for
 [developing packages and plugins](https://flutter.dev/developing-packages).
 -->
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
-
-## Features
-
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+Atlas customer support chat widget
 
 ## Getting started
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+To use it with Android you may need to ensure that *AndroidManifest.xml* includes `<uses-permission android:name="android.permission.INTERNET" />`
 
 ## Usage
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
+Using the widget to add the chat
 
 ```dart
-const like = 'sample';
+import 'package:atlas_support_sdk/atlas_support_widget.dart';
+
+// Use widget:
+AtlasSupportWidget(appId: "", userId: "", userHash: "")
 ```
 
-## Additional information
+Listening for stats changes
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+```dart
+import 'package:atlas_support_sdk/watch_atlas_support_stats.dart';
+
+// Listen:
+class _MyWidgetState extends State<MyWidget> {
+  int _unreadCount = 0;
+  Function? _unsubscribe = null;
+
+  @override
+  void initState() {
+    super.initState();
+    _unsubscribe = watchAtlasSupportStats(
+        appId: "",
+        userId: "",
+        userHash: "",
+        onStatsChange: (stats) {
+          setState(() {
+            _unreadCount = stats['conversations']
+                .fold(0, (sum, conversation) => sum + conversation['unread']);
+          });
+        });
+  }
+
+  @override
+  void dispose() {
+    _unsubscribe?.call();
+    super.dispose();
+  }
+
+  // ...
+}
+```
