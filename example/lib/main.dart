@@ -1,7 +1,6 @@
+import 'package:atlas_support_sdk/atlas_support_sdk.dart';
 import 'package:flutter/material.dart';
 import 'package:badges/badges.dart';
-import 'package:atlas_support_sdk/watch_atlas_support_stats.dart';
-import 'package:atlas_support_sdk/atlas_support_widget.dart';
 
 const String testAppId = "jbnpaijbo0";
 const String testUserId = "123";
@@ -58,16 +57,14 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
   int _unreadCount = 0;
-  Function? _unsubscribe = null;
+  Function? _unsubscribe;
+  var sdk = createAtlasSupportSDK(testAppId, testUserId, testUserHash);
 
   @override
   void initState() {
     super.initState();
-    _unsubscribe = watchAtlasSupportStats(
-        appId: testAppId,
-        userId: testUserId,
-        userHash: testUserHash,
-        onStatsChange: (stats) {
+    _unsubscribe = sdk.watchStats(
+        (stats) {
           setState(() {
             _unreadCount = stats['conversations']
                 .fold(0, (sum, conversation) => sum + conversation['unread']);
@@ -119,10 +116,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           appBar: AppBar(
                             title: const Text('Help'),
                           ),
-                          body: const AtlasSupportWidget(
-                              appId: testAppId,
-                              userId: testUserId,
-                              userHash: testUserHash),
+                          body: sdk.Widget(),
                         );
                       }));
                     }))
