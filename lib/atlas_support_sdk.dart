@@ -1,13 +1,10 @@
 library atlas_support_sdk;
 
-import 'package:flutter/material.dart';
 import 'watch_atlas_support_stats.dart';
 import 'atlas_support_widget.dart';
-import 'atlas_support_widget_state.dart';
 
 class AtlasSupportSDK {
   final String appId;
-  final key = GlobalKey<AtlasSupportWidgetState>();
   String userId;
   String userHash;
   String? userName;
@@ -17,7 +14,7 @@ class AtlasSupportSDK {
 
   Widget() {
     return AtlasSupportWidget(
-        key: key, appId: appId, userId: userId, userHash: userHash, userName: userName, userEmail: userEmail);
+        appId: appId, userId: userId, userHash: userHash, userName: userName, userEmail: userEmail);
   }
 
   watchStats(Function listener) {

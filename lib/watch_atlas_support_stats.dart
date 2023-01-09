@@ -11,11 +11,13 @@ Function watchAtlasSupportStats(
     {required String appId,
     required String userId,
     required String userHash,
+    String? userName,
+    String? userEmail,
     required Function onStatsChange}) {
   var killed = false;
   Function? unsubscribe;
 
-  login(appId: appId, userId: userId, userHash: userHash).then((customer) {
+  login(appId: appId, userId: userId, userHash: userHash, userName: userName, userEmail: userEmail).then((customer) {
     if (killed) throw Error(); // Canceled
     return loadConversations(atlasId: customer['id'], userHash: userHash)
         .then((conversations) => [customer, conversations]);
