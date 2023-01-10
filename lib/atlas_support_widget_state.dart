@@ -48,6 +48,33 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
   }
 
   @override
+  void didUpdateWidget(AtlasSupportWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    var hasChanged = widget.userId != oldWidget.userId ||
+        widget.userHash != oldWidget.userHash ||
+        widget.userName != oldWidget.userName ||
+        widget.userEmail != oldWidget.userEmail;
+    if (hasChanged) {
+      _controller.clearLocalStorage();
+      _controller.runJavaScript("sessionStorage.clear();");
+      _controller
+          .loadRequest(Uri.parse(atlasWidgetBaseUrl).replace(queryParameters: {
+        'appId': widget.appId,
+        'userId': widget.userId,
+        'userHash': widget.userHash,
+        'userName': widget.userName,
+        'userEmail': widget.userEmail,
+      }));
+    }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _controller.clearLocalStorage();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return WebViewWidget(controller: _controller);
   }

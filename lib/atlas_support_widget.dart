@@ -14,7 +14,10 @@ class AtlasSupportWidget extends StatefulWidget {
       {Key? key,
       required this.appId,
       required this.userId,
-      required this.userHash, this.userName, this.userEmail}): super(key: key);
+      required this.userHash,
+      this.userName,
+      this.userEmail})
+      : super(key: key);
 
   @override
   State<AtlasSupportWidget> createState() => AtlasSupportWidgetState();

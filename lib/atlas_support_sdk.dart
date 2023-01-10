@@ -1,36 +1,104 @@
-library atlas_support_sdk;
-
 import 'watch_atlas_support_stats.dart';
-import 'atlas_support_widget.dart';
+import '_dynamic_atlas_support_widget.dart';
 
 class AtlasSupportSDK {
   final String appId;
-  String userId;
-  String userHash;
-  String? userName;
-  String? userEmail;
+  String? _userId;
+  String? _userHash;
+  String? _userName;
+  String? _userEmail;
 
-  AtlasSupportSDK({required this.appId, this.userId = "", this.userHash = "", this.userName, this.userEmail});
+  final List<Function> _listeners = [];
+
+  AtlasSupportSDK(
+      {required this.appId,
+      String? userId,
+      String? userHash,
+      String? userName,
+      String? userEmail})
+      : _userId = userId,
+        _userHash = userHash,
+        _userName = userName,
+        _userEmail = userEmail;
 
   Widget() {
-    return AtlasSupportWidget(
-        appId: appId, userId: userId, userHash: userHash, userName: userName, userEmail: userEmail);
+    return DynamicAtlasSupportWidget(
+      appId: appId,
+      initialUserId: _userId,
+      initialUserHash: _userHash,
+      initialUserName: _userName,
+      initialUserEmail: _userEmail,
+      changeIdentityNotifier: (Function listener) {
+        _listeners.add(listener);
+        return () => _listeners.remove(listener);
+      },
+    );
   }
 
   watchStats(Function listener) {
-    var close = watchAtlasSupportStats(
-        appId: appId,
-        userId: userId,
-        userHash: userHash,
-        onStatsChange: listener);
+    var userId = _userId;
+    var userHash = _userHash;
 
-    return () {
+    if (userId == null || userHash == null) {
+      listener({'conversations': []});
+    }
+
+    var close = userId == null || userHash == null
+        ? () {}
+        : watchAtlasSupportStats(
+            appId: appId,
+            userId: userId,
+            userHash: userHash,
+            userName: _userName,
+            userEmail: _userEmail,
+            onStatsChange: listener);
+
+    void restart(Map newIdentity) {
       close();
-    };
+      listener({'conversations': []});
+      close = newIdentity['userId'] == null || newIdentity['userHash'] == null
+          ? () {}
+          : watchAtlasSupportStats(
+              appId: appId,
+              userId: newIdentity['userId'],
+              userHash: newIdentity['userHash'],
+              userName: newIdentity['userName'],
+              userEmail: newIdentity['userEmail'],
+              onStatsChange: listener);
+    }
+
+    _listeners.add(restart);
+
+    return close();
+  }
+
+  void identify(
+      {String? userId, String? userHash, String? userName, String? userEmail}) {
+    _userId = userId ?? _userId;
+    _userHash = userHash ?? _userHash;
+    _userName = userName ?? _userName;
+    _userEmail = userEmail ?? _userEmail;
+
+    for (var listener in _listeners) {
+      listener({
+        'userId': _userId,
+        'userHash': _userHash,
+        'userName': _userName,
+        'userEmail': _userEmail
+      });
+    }
   }
 }
 
 AtlasSupportSDK createAtlasSupportSDK(
-    String appId, String userId, String userHash) {
-  return AtlasSupportSDK(appId: appId, userId: userId, userHash: userHash);
-}
+        {required String appId,
+        String? userId,
+        String? userHash,
+        String? userName,
+        String? userEmail}) =>
+    AtlasSupportSDK(
+        appId: appId,
+        userId: userId,
+        userHash: userHash,
+        userName: userName,
+        userEmail: userEmail);
