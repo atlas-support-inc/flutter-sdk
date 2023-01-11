@@ -4,8 +4,12 @@ import 'dart:convert';
 
 import 'package:atlas_support_sdk/_connect_customer.dart';
 import 'package:atlas_support_sdk/_load_conversations.dart';
+import 'package:atlas_support_sdk/atlas_stats.dart';
+import 'package:atlas_support_sdk/conversation_stats.dart';
 
 import '_login.dart';
+
+typedef StatsChangeCallback = void Function(AtlasStats stats);
 
 Function watchAtlasSupportStats(
     {required String appId,
@@ -13,34 +17,40 @@ Function watchAtlasSupportStats(
     required String userHash,
     String? userName,
     String? userEmail,
-    required Function onStatsChange}) {
+    Function? onError,
+    required StatsChangeCallback onStatsChange}) {
   var killed = false;
   Function? unsubscribe;
 
-  login(appId: appId, userId: userId, userHash: userHash, userName: userName, userEmail: userEmail).then((customer) {
-    if (killed) throw Error(); // Canceled
+  login(
+          appId: appId,
+          userId: userId,
+          userHash: userHash,
+          userName: userName,
+          userEmail: userEmail)
+      .then((customer) {
+    if (killed) throw Exception("Subscription canceled at login");
     return loadConversations(atlasId: customer['id'], userHash: userHash)
         .then((conversations) => [customer, conversations]);
   }).then((results) {
-    if (killed) return;
+    if (killed) throw Exception("Subscription canceled");
 
     var customer = results[0];
-    var conversations = results[1];
+    final conversations = results[1] as List<dynamic>;
 
-    var stats = {
-      'conversations': conversations.map(getConversationStats).toList()
-    };
+    var conversationsStats = conversations.map(getConversationStats).toList();
+    var stats = AtlasStats(conversations: conversationsStats);
 
     onStatsChange(stats);
 
     void updateConversationStats(conversation) {
       var conversationStats = getConversationStats(conversation);
-      var conversationIndex = stats['conversations']
-          .indexWhere((c) => c['id'] == conversation['id']);
+      var conversationIndex =
+          stats.conversations.indexWhere((c) => c.id == conversation['id']);
       if (conversationIndex == -1) {
-        stats['conversations'].add(conversationStats);
+        stats.conversations.add(conversationStats);
       } else {
-        stats['conversations'][conversationIndex] = conversationStats;
+        stats.conversations[conversationIndex] = conversationStats;
       }
       onStatsChange(stats);
     }
@@ -61,9 +71,10 @@ Function watchAtlasSupportStats(
                 break;
               case 'MESSAGE_READ':
                 if (data['payload']['conversationId'] is String) {
-                  stats['conversations'] = stats['conversations']
-                    .map((c) => c['id'] == data['payload']['conversationId'] ? { ...c, 'unread': 0 } : c)
-                    .toList();
+                  stats.conversations = stats.conversations.map((c) {
+                    if (c.id == data['payload']['conversationId']) c.unread = 0;
+                    return c;
+                  }).toList();
                   onStatsChange(stats);
                 }
                 break;
@@ -71,23 +82,21 @@ Function watchAtlasSupportStats(
                 var message = jsonDecode(data['payload']['message']);
                 if (!message) return;
 
-                var conversation = stats['conversations'].firstWhere((c) => c['id'] == message['conversationId']);
-                if (conversation) {
-                  conversation['unread']++;
+                var conversation = stats.conversations
+                    .firstWhere((c) => c.id == message['conversationId']);
+                if (conversation != null) {
+                  conversation.unread++;
                 } else {
-                  stats['conversations'].add({
-                    'id': message['conversationId'],
-                    'unread': 1,
-                    'closed': false,
-                  });
+                  stats.conversations.add(ConversationsStats(
+                      id: message['conversationId'], unread: 1, closed: false));
                 }
 
                 onStatsChange(stats);
                 break;
               case 'CONVERSATION_HIDDEN':
-                stats['conversations'] = stats['conversations']
-                  .where((c) => c['id'] != data['payload']['conversationId'])
-                  .toList();
+                stats.conversations = stats.conversations
+                    .where((c) => c.id != data['payload']['conversationId'])
+                    .toList();
                 onStatsChange(stats);
                 break;
             }
@@ -95,8 +104,7 @@ Function watchAtlasSupportStats(
             return;
           }
         });
-  });
-  // TODO: Catch rejection and call onError()
+  }).catchError((error) => onError?.call(error));
 
   return () {
     killed = true;
@@ -104,15 +112,14 @@ Function watchAtlasSupportStats(
   };
 }
 
-Map getConversationStats(conversation) {
-  List messages = conversation['messages'];
+ConversationsStats getConversationStats(dynamic conversation) {
+  List messages = conversation['messages'] ?? [];
   int unread = 0;
-  messages.forEach((message) {
+  for (var message in messages) {
     if (!message['read']) unread++;
-  });
-  return {
-    'id': conversation['id'],
-    'unread': unread,
-    'closed': conversation['closed'] == true,
-  };
+  }
+  return ConversationsStats(
+      id: conversation['id'],
+      unread: unread,
+      closed: conversation['closed'] == true);
 }

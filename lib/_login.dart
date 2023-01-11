@@ -28,7 +28,7 @@ Future login(
         return jsonDecode(response.body);
       }
 
-      throw Error(); // Login failed
+      throw Exception("Login failed");
     },
   );
 }

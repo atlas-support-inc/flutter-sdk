@@ -1,3 +1,5 @@
+import 'package:atlas_support_sdk/atlas_stats.dart';
+
 import 'watch_atlas_support_stats.dart';
 import '_dynamic_atlas_support_widget.dart';
 
@@ -35,12 +37,12 @@ class AtlasSupportSDK {
     );
   }
 
-  watchStats(Function listener) {
+  watchStats(StatsChangeCallback listener, [Function? onError]) {
     var userId = _userId;
     var userHash = _userHash;
 
     if (userId == null || userHash == null) {
-      listener({'conversations': []});
+      listener(AtlasStats(conversations: []));
     }
 
     var close = userId == null || userHash == null
@@ -51,11 +53,12 @@ class AtlasSupportSDK {
             userHash: userHash,
             userName: _userName,
             userEmail: _userEmail,
+            onError: onError,
             onStatsChange: listener);
 
     void restart(Map newIdentity) {
       close();
-      listener({'conversations': []});
+      listener(AtlasStats(conversations: []));
       close = newIdentity['userId'] == null || newIdentity['userHash'] == null
           ? () {}
           : watchAtlasSupportStats(
@@ -69,7 +72,7 @@ class AtlasSupportSDK {
 
     _listeners.add(restart);
 
-    return close();
+    return close;
   }
 
   void identify(

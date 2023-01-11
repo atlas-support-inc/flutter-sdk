@@ -40,7 +40,7 @@ class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
   int _unreadCount = 0;
   Function? _unsubscribe;
-  var sdk = createAtlasSupportSDK(
+  AtlasSupportSDK sdk = createAtlasSupportSDK(
       appId: testAppId, userId: testUserId, userHash: testUserHash);
 
   @override
@@ -48,8 +48,8 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     _unsubscribe = sdk.watchStats((stats) {
       setState(() {
-        _unreadCount = stats['conversations']
-            .fold(0, (sum, conversation) => sum + conversation['unread']);
+        _unreadCount = stats.conversations
+            .fold(0, (sum, conversation) => sum + conversation.unread);
       });
     });
   }

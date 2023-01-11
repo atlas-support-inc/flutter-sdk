@@ -19,7 +19,9 @@ To use it with Android you may need to ensure that *AndroidManifest.xml* include
 
 ## Usage
 
-Using the widget to add the chat
+You can run [sample application](https://github.com/atlas-support-inc/flutter-sdk/blob/master/example) by changing credentials in the [main.dart](https://github.com/atlas-support-inc/flutter-sdk/blob/master/example/lib/main.dart) file.
+
+### Using the widget to add the chat
 
 ```dart
 import 'package:atlas_support_sdk/atlas_support_widget.dart';
@@ -28,7 +30,9 @@ import 'package:atlas_support_sdk/atlas_support_widget.dart';
 AtlasSupportWidget(appId: "", userId: "", userHash: "")
 ```
 
-Listening for stats changes
+### Listening for stats changes
+
+Each conversation stat instance contains `id`, `unread` (amount of unread messages), and `closed` flag.
 
 ```dart
 import 'package:atlas_support_sdk/watch_atlas_support_stats.dart';
@@ -47,8 +51,8 @@ class _MyWidgetState extends State<MyWidget> {
         userHash: "",
         onStatsChange: (stats) {
           setState(() {
-            _unreadCount = stats['conversations']
-                .fold(0, (sum, conversation) => sum + conversation['unread']);
+            _unreadCount = stats.conversations
+                .fold(0, (sum, conversation) => sum + conversation.closed ? 0 : conversation.unread);
           });
         });
   }
@@ -57,6 +61,47 @@ class _MyWidgetState extends State<MyWidget> {
   void dispose() {
     _unsubscribe?.call();
     super.dispose();
+  }
+
+  // ...
+}
+```
+
+### Using instance with shared settings
+
+Using SDK instance you can change user for all widgets and watches by calling `sdk.identify(userId: "", userHash: "")`.
+
+```dart
+import 'package:atlas_support_sdk/atlas_support_sdk.dart';
+
+// Listen:
+class _MyWidgetState extends State<MyWidget> {
+  int _unreadCount = 0;
+  Function? _unsubscribe = null;
+  AtlasSupportSDK atlasSdk = createAtlasSupportSDK(appId: "", userId: "", userHash: "");
+
+  @override
+  void initState() {
+    super.initState();
+    _unsubscribe = atlasSdk.watchStats((stats) {
+      setState(() {
+        _unreadCount = stats.conversations
+            .fold(0, (sum, conversation) => sum + conversation.closed ? 0 : conversation.unread);
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _unsubscribe?.call();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: atlasSdk.Widget()
+    );
   }
 
   // ...
