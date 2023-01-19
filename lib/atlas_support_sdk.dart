@@ -1,5 +1,6 @@
-import 'package:atlas_support_sdk/atlas_stats.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
+import 'atlas_stats.dart';
 import 'watch_atlas_support_stats.dart';
 import '_dynamic_atlas_support_widget.dart';
 
@@ -11,6 +12,7 @@ class AtlasSupportSDK {
   String? _userEmail;
 
   final List<Function> _listeners = [];
+  final Map<String, WebViewController> _controllers = {};
 
   AtlasSupportSDK(
       {required this.appId,
@@ -23,13 +25,19 @@ class AtlasSupportSDK {
         _userName = userName,
         _userEmail = userEmail;
 
-  Widget() {
+  Widget({String? persist}) {
     return DynamicAtlasSupportWidget(
       appId: appId,
       initialUserId: _userId,
       initialUserHash: _userHash,
       initialUserName: _userName,
       initialUserEmail: _userEmail,
+      controller: persist != null ? _controllers[persist] : null,
+      onNewController: persist != null
+          ? (WebViewController controller) {
+              _controllers[persist] = controller;
+            }
+          : null,
       changeIdentityNotifier: (Function listener) {
         _listeners.add(listener);
         return () => _listeners.remove(listener);

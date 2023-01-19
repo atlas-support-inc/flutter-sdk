@@ -15,7 +15,7 @@ Atlas customer support chat widget
 
 ## Getting started
 
-To use it with Android you may need to ensure that *AndroidManifest.xml* includes `<uses-permission android:name="android.permission.INTERNET" />`
+To use it with Android you may need to ensure that _AndroidManifest.xml_ includes `<uses-permission android:name="android.permission.INTERNET" />`
 
 ## Usage
 
@@ -106,4 +106,11 @@ class _MyWidgetState extends State<MyWidget> {
 
   // ...
 }
+```
+
+When using the widget via SDK instance you can also persist its state to prevent loading Atlas more than once.
+Use `persist` property with the unique string value at any place and after the initial load the app will render immediately:
+
+```dart
+sdk.Widget(persist: "main")
 ```

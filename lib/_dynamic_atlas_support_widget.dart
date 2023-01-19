@@ -1,6 +1,7 @@
 library atlas_support_sdk;
 
 import 'package:flutter/material.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import '_dynamic_atlas_support_widget_state.dart';
 
 class DynamicAtlasSupportWidget extends StatefulWidget {
@@ -10,6 +11,8 @@ class DynamicAtlasSupportWidget extends StatefulWidget {
   final String? initialUserName;
   final String? initialUserEmail;
   final Function changeIdentityNotifier;
+  final WebViewController? controller;
+  final Function(WebViewController controller)? onNewController;
 
   const DynamicAtlasSupportWidget(
       {Key? key,
@@ -18,6 +21,8 @@ class DynamicAtlasSupportWidget extends StatefulWidget {
       this.initialUserHash,
       this.initialUserName,
       this.initialUserEmail,
+      this.controller,
+      required this.onNewController,
       required this.changeIdentityNotifier})
       : super(key: key);
 

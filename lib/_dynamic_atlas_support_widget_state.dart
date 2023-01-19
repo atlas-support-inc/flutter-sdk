@@ -1,8 +1,8 @@
 library atlas_support_sdk;
 
-import 'package:atlas_support_sdk/atlas_support_widget.dart';
 import 'package:flutter/material.dart';
 
+import '_atlas_support_controllable_widget.dart';
 import '_dynamic_atlas_support_widget.dart';
 
 class DynamicAtlasSupportWidgetState extends State<DynamicAtlasSupportWidget> {
@@ -45,12 +45,14 @@ class DynamicAtlasSupportWidgetState extends State<DynamicAtlasSupportWidget> {
       return Container();
     }
 
-    return AtlasSupportWidget(
+    return AtlasSupportControllableWidget(
       appId: widget.appId,
       userId: userId,
       userHash: userHash,
       userName: _userName,
       userEmail: _userEmail,
+      controller: widget.controller,
+      onNewController: widget.onNewController,
     );
   }
 }

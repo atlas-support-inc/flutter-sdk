@@ -2,10 +2,10 @@ library atlas_support_sdk;
 
 import 'dart:convert';
 
-import 'package:atlas_support_sdk/_connect_customer.dart';
-import 'package:atlas_support_sdk/_load_conversations.dart';
-import 'package:atlas_support_sdk/atlas_stats.dart';
-import 'package:atlas_support_sdk/conversation_stats.dart';
+import '_connect_customer.dart';
+import '_load_conversations.dart';
+import 'atlas_stats.dart';
+import 'conversation_stats.dart';
 
 import '_login.dart';
 

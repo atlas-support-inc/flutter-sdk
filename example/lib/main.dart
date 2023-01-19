@@ -82,7 +82,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       appBar: AppBar(
                         title: const Text('Help'),
                       ),
-                      body: sdk.Widget(),
+                      body: sdk.Widget(persist: "main"),
                     );
                   }));
                 }))
