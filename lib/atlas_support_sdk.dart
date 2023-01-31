@@ -90,6 +90,8 @@ class AtlasSupportSDK {
     _userName = userName ?? _userName;
     _userEmail = userEmail ?? _userEmail;
 
+    _controllers.clear();
+
     for (var listener in _listeners) {
       listener({
         'userId': _userId,

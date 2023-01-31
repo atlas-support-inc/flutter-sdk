@@ -42,7 +42,6 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
   @override
   void dispose() {
     super.dispose();
-    _controller.clearLocalStorage();
   }
 
   @override
@@ -66,6 +65,7 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
 
     controller
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..clearLocalStorage()
       ..loadRequest(Uri.parse(atlasWidgetBaseUrl).replace(queryParameters: {
         'appId': widget.appId,
         'userId': widget.userId,
