@@ -1,8 +1,7 @@
 name: atlas_support_sdk
 description: Atlas customer support chat widget
-version: 1.1.1
+version: 1.1.2
 homepage: https://www.getatlas.io/
-repository: https://github.com/atlas-support-inc/flutter-sdk
 
 environment:
   sdk: ">=2.18.6 <3.0.0"
