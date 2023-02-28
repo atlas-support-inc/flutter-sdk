@@ -1,5 +1,7 @@
 library atlas_support_sdk;
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
@@ -26,16 +28,7 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
         widget.userName != oldWidget.userName ||
         widget.userEmail != oldWidget.userEmail;
     if (hasChanged) {
-      _controller.clearLocalStorage();
-      _controller.runJavaScript("sessionStorage.clear();");
-      _controller
-          .loadRequest(Uri.parse(atlasWidgetBaseUrl).replace(queryParameters: {
-        'appId': widget.appId,
-        'userId': widget.userId,
-        'userHash': widget.userHash,
-        'userName': widget.userName,
-        'userEmail': widget.userEmail,
-      }));
+      _loadPage(_controller);
     }
   }
 
@@ -47,6 +40,21 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
   @override
   Widget build(BuildContext context) {
     return WebViewWidget(controller: _controller);
+  }
+
+  _loadPage(WebViewController controller) {
+    var url = Uri.parse(atlasWidgetBaseUrl).replace(queryParameters: {
+      'appId': widget.appId,
+      'userId': widget.userId,
+      'userHash': widget.userHash,
+      ...widget.userName == null || widget.userName == ""
+          ? {}
+          : {'userName': widget.userName},
+      ...widget.userEmail == null || widget.userEmail == ""
+          ? {}
+          : {'userEmail': widget.userEmail},
+    });
+    controller.loadRequest(url);
   }
 
   WebViewController initController() {
@@ -63,16 +71,21 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
     final WebViewController controller =
         WebViewController.fromPlatformCreationParams(params);
 
-    controller
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..clearLocalStorage()
-      ..loadRequest(Uri.parse(atlasWidgetBaseUrl).replace(queryParameters: {
-        'appId': widget.appId,
-        'userId': widget.userId,
-        'userHash': widget.userHash,
-        'userName': widget.userName,
-        'userEmail': widget.userEmail,
-      }));
+    controller.setJavaScriptMode(JavaScriptMode.unrestricted);
+    _loadPage(controller);
+
+    controller.addJavaScriptChannel("FlutterWebView",
+        onMessageReceived: (package) {
+      try {
+        final message = (jsonDecode(package.message) as Map<String, dynamic>);
+        if (message['type'] == 'atlas:error') {
+          widget.onError
+              ?.call('AtlasSupportWidget: ${message['errorMessage']}');
+        }
+      } catch (e) {
+        widget.onError?.call('AtlasSupportWidget: ${package.message}');
+      }
+    });
 
     if (controller.platform is AndroidWebViewController) {
       AndroidWebViewController.enableDebugging(true);

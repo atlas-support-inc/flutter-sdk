@@ -46,13 +46,13 @@ class DynamicAtlasSupportWidgetState extends State<DynamicAtlasSupportWidget> {
     }
 
     return AtlasSupportControllableWidget(
-      appId: widget.appId,
-      userId: userId,
-      userHash: userHash,
-      userName: _userName,
-      userEmail: _userEmail,
-      controller: widget.controller,
-      onNewController: widget.onNewController,
-    );
+        appId: widget.appId,
+        userId: userId,
+        userHash: userHash,
+        userName: _userName,
+        userEmail: _userEmail,
+        onError: widget.onError,
+        controller: widget.controller,
+        onNewController: widget.onNewController);
   }
 }

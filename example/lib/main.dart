@@ -1,10 +1,11 @@
 import 'package:atlas_support_sdk/atlas_support_sdk.dart';
 import 'package:flutter/material.dart';
 import 'package:badges/badges.dart';
+import 'test_users.dart';
 
-const testAppId = "jbnpaijbo0";
-const testUserId = "123";
-const testUserHash = "123";
+var firstUser = user;
+var secondUser = userSecond;
+var currentUser = firstUser;
 
 void main() {
   runApp(const MyApp());
@@ -41,7 +42,7 @@ class _MyHomePageState extends State<MyHomePage> {
   int _unreadCount = 0;
   Function? _unsubscribe;
   AtlasSupportSDK sdk = createAtlasSupportSDK(
-      appId: testAppId, userId: testUserId, userHash: testUserHash);
+      appId: appId, userId: user['id'], userHash: user['hash'], onError: print);
 
   @override
   void initState() {
@@ -81,6 +82,18 @@ class _MyHomePageState extends State<MyHomePage> {
                     return Scaffold(
                       appBar: AppBar(
                         title: const Text('Help'),
+                        actions: <Widget>[
+                          IconButton(
+                              onPressed: () {
+                                currentUser = currentUser == firstUser
+                                    ? secondUser
+                                    : firstUser;
+                                sdk.identify(
+                                    userId: currentUser['id'],
+                                    userHash: currentUser['hash']);
+                              },
+                              icon: const Icon(Icons.refresh))
+                        ],
                       ),
                       body: sdk.Widget(persist: "main"),
                     );

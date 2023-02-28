@@ -4,8 +4,11 @@ import 'atlas_stats.dart';
 import 'watch_atlas_support_stats.dart';
 import '_dynamic_atlas_support_widget.dart';
 
+typedef AtlasErrorHandler = void Function(dynamic message);
+
 class AtlasSupportSDK {
   final String appId;
+  final AtlasErrorHandler? _onError;
   String? _userId;
   String? _userHash;
   String? _userName;
@@ -19,19 +22,25 @@ class AtlasSupportSDK {
       String? userId,
       String? userHash,
       String? userName,
-      String? userEmail})
+      String? userEmail,
+      AtlasErrorHandler? onError})
       : _userId = userId,
         _userHash = userHash,
         _userName = userName,
-        _userEmail = userEmail;
+        _userEmail = userEmail,
+        _onError = onError;
 
-  Widget({String? persist}) {
+  Widget({String? persist, AtlasErrorHandler? onError}) {
     return DynamicAtlasSupportWidget(
       appId: appId,
       initialUserId: _userId,
       initialUserHash: _userHash,
       initialUserName: _userName,
       initialUserEmail: _userEmail,
+      onError: (message) {
+        onError?.call(message);
+        _onError?.call(message);
+      },
       controller: persist != null ? _controllers[persist] : null,
       onNewController: persist != null
           ? (WebViewController controller) {
@@ -45,7 +54,7 @@ class AtlasSupportSDK {
     );
   }
 
-  watchStats(StatsChangeCallback listener, [Function? onError]) {
+  watchStats(StatsChangeCallback listener, [AtlasErrorHandler? onError]) {
     var userId = _userId;
     var userHash = _userHash;
 
@@ -61,7 +70,10 @@ class AtlasSupportSDK {
             userHash: userHash,
             userName: _userName,
             userEmail: _userEmail,
-            onError: onError,
+            onError: (message) {
+              onError?.call(message);
+              _onError?.call(message);
+            },
             onStatsChange: listener);
 
     void restart(Map newIdentity) {
@@ -108,10 +120,12 @@ AtlasSupportSDK createAtlasSupportSDK(
         String? userId,
         String? userHash,
         String? userName,
-        String? userEmail}) =>
+        String? userEmail,
+        AtlasErrorHandler? onError}) =>
     AtlasSupportSDK(
         appId: appId,
         userId: userId,
         userHash: userHash,
         userName: userName,
-        userEmail: userEmail);
+        userEmail: userEmail,
+        onError: onError);

@@ -10,6 +10,7 @@ import 'conversation_stats.dart';
 import '_login.dart';
 
 typedef StatsChangeCallback = void Function(AtlasStats stats);
+typedef AtlasWatcherErrorHandler = void Function(dynamic message);
 
 Function watchAtlasSupportStats(
     {required String appId,
@@ -17,7 +18,7 @@ Function watchAtlasSupportStats(
     required String userHash,
     String? userName,
     String? userEmail,
-    Function? onError,
+    AtlasWatcherErrorHandler? onError,
     required StatsChangeCallback onStatsChange}) {
   var killed = false;
   Function? unsubscribe;
@@ -104,7 +105,9 @@ Function watchAtlasSupportStats(
             return;
           }
         });
-  }).catchError((error) => onError?.call(error));
+  }).catchError((error) {
+    onError?.call(error);
+  });
 
   return () {
     killed = true;

@@ -17,6 +17,7 @@ class AtlasSupportControllableWidget extends AtlasSupportWidget {
     required String userHash,
     String? userName,
     String? userEmail,
+    AtlasWidgetErrorHandler? onError,
     this.controller,
     this.onNewController,
   }) : super(
@@ -25,7 +26,8 @@ class AtlasSupportControllableWidget extends AtlasSupportWidget {
             userId: userId,
             userHash: userHash,
             userName: userName,
-            userEmail: userEmail);
+            userEmail: userEmail,
+            onError: onError);
 
   @override
   State<AtlasSupportWidget> createState() =>

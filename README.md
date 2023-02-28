@@ -27,7 +27,7 @@ You can run [sample application](https://github.com/atlas-support-inc/flutter-sd
 import 'package:atlas_support_sdk/atlas_support_widget.dart';
 
 // Use widget:
-AtlasSupportWidget(appId: "", userId: "", userHash: "")
+AtlasSupportWidget(appId: "", userId: "", userHash: "", onError: print)
 ```
 
 ### Listening for stats changes
@@ -54,7 +54,8 @@ class _MyWidgetState extends State<MyWidget> {
             _unreadCount = stats.conversations
                 .fold(0, (sum, conversation) => sum + conversation.closed ? 0 : conversation.unread);
           });
-        });
+        },
+        onError: print);
   }
 
   @override
@@ -78,7 +79,7 @@ import 'package:atlas_support_sdk/atlas_support_sdk.dart';
 class _MyWidgetState extends State<MyWidget> {
   int _unreadCount = 0;
   Function? _unsubscribe = null;
-  AtlasSupportSDK atlasSdk = createAtlasSupportSDK(appId: "", userId: "", userHash: "");
+  AtlasSupportSDK atlasSdk = createAtlasSupportSDK(appId: "", userId: "", userHash: "", onError: print);
 
   @override
   void initState() {
