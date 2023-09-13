@@ -11,7 +11,7 @@ and the Flutter guide for
 [developing packages and plugins](https://flutter.dev/developing-packages).
 -->
 
-Atlas customer support chat widget
+Atlas customer support chat widget for Flutter
 
 ## Getting started
 
