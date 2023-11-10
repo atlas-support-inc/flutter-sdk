@@ -1,6 +1,6 @@
 import 'package:atlas_support_sdk/atlas_support_sdk.dart';
 import 'package:flutter/material.dart';
-import 'package:badges/badges.dart';
+import 'package:badges/badges.dart' as badges;
 import 'test_users.dart';
 
 var firstUser = user;
@@ -71,10 +71,10 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(widget.title), actions: <Widget>[
-        Badge(
+        badges.Badge(
             showBadge: _unreadCount > 0,
             badgeContent: Text(_unreadCount.toString()),
-            position: BadgePosition.topEnd(top: 5, end: 5),
+            position: badges.BadgePosition.topEnd(top: 5, end: 5),
             child: IconButton(
                 icon: const Icon(Icons.help),
                 onPressed: () {
@@ -109,7 +109,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             Text(
               '$_counter',
-              style: Theme.of(context).textTheme.headline4,
+              style: Theme.of(context).textTheme.headlineMedium,
             ),
           ],
         ),
