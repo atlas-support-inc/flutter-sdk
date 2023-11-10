@@ -28,7 +28,21 @@ Future login(
         return jsonDecode(response.body);
       }
 
-      throw Exception("Login failed");
+      var text = response.body;
+
+      try {
+        var body = jsonDecode(text);
+        var errorMessage = 
+          body is Map && 
+          body.containsKey('detail') && 
+          body['detail'] is String
+            ? body['detail']
+            : jsonEncode(body);
+
+        throw Exception("Login failed: $errorMessage");
+      } catch (err) {}
+
+      throw Exception("Login failed: HTTP(${response.statusCode}) $text");
     },
   );
 }

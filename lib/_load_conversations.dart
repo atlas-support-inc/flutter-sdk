@@ -13,7 +13,21 @@ Future<List<dynamic>> loadConversations(
         return json['data'] ?? {};
       }
 
-      throw Exception("Stats loading failed");
+      var text = response.body;
+
+      try {
+        var body = jsonDecode(text);
+        var errorMessage = 
+          body is Map && 
+          body.containsKey('detail') && 
+          body['detail'] is String
+            ? body['detail']
+            : jsonEncode(body);
+
+        throw Exception("Stats failed: $errorMessage");
+      } catch (err) {}
+
+      throw Exception("Stats failed: HTTP(${response.statusCode}) $text");
     },
   );
 }
