@@ -4,7 +4,7 @@ import 'package:badges/badges.dart' as badges;
 import 'test_users.dart';
 
 var firstUser = user;
-var secondUser = userSecond;
+var secondUser = userEmpty;
 var currentUser = firstUser;
 
 void main() {

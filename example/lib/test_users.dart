@@ -1,6 +1,6 @@
 import 'dart:math';
 
-const appId = 'jbnpaijbo0';
+const appId = '7wukb9ywp9__x33kupocfb';
 const user = {
   'id': '1e9322f7-fa86-400d-bf84-4cb64a981910',
   'hash': '5d88e73eeba85abf97aec8d390e9ab0e467bd7b212a2bcca1c3fbcaa8972ad01',
