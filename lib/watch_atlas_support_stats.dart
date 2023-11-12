@@ -15,7 +15,7 @@ typedef AtlasWatcherErrorHandler = void Function(dynamic message);
 Function watchAtlasSupportStats(
     {required String appId,
     required String userId,
-    required String userHash,
+    String? userHash,
     String? userName,
     String? userEmail,
     AtlasWatcherErrorHandler? onError,

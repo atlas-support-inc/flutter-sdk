@@ -97,10 +97,10 @@ class AtlasSupportSDK {
 
   void identify(
       {String? userId, String? userHash, String? userName, String? userEmail}) {
-    _userId = userId ?? _userId;
-    _userHash = userHash ?? _userHash;
-    _userName = userName ?? _userName;
-    _userEmail = userEmail ?? _userEmail;
+    _userId = userId;
+    _userHash = userHash;
+    _userName = userName;
+    _userEmail = userEmail;
 
     _controllers.clear();
 

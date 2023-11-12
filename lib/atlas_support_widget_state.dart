@@ -46,7 +46,9 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
     var url = Uri.parse(atlasWidgetBaseUrl).replace(queryParameters: {
       'appId': widget.appId,
       'userId': widget.userId,
-      'userHash': widget.userHash,
+      ...widget.userHash == null || widget.userHash == ""
+          ? {}
+          : {'userHash': widget.userHash},
       ...widget.userName == null || widget.userName == ""
           ? {}
           : {'userName': widget.userName},

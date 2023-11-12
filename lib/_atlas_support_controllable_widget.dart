@@ -14,7 +14,7 @@ class AtlasSupportControllableWidget extends AtlasSupportWidget {
     Key? key,
     required String appId,
     required String userId,
-    required String userHash,
+    String? userHash,
     String? userName,
     String? userEmail,
     AtlasWidgetErrorHandler? onError,

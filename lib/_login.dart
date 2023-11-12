@@ -7,7 +7,7 @@ const loginUrl = "$atlasApiBaseUrl/client-app/company/identify";
 Future login(
     {required String appId,
     required String userId,
-    required String userHash,
+    String? userHash,
     String? userName,
     String? userEmail}) {
   var uri = Uri.parse(loginUrl);
@@ -18,7 +18,7 @@ Future login(
           body: jsonEncode({
             'appId': appId,
             'userId': userId,
-            'userHash': userHash,
+            ...(userHash == null ? {} : {'userHash': userHash}),
             ...(userName == null ? {} : {'userName': userName}),
             ...(userEmail == null ? {} : {'userEmail': userEmail}),
           }))

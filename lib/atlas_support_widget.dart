@@ -8,7 +8,7 @@ typedef AtlasWidgetErrorHandler = void Function(dynamic message);
 class AtlasSupportWidget extends StatefulWidget {
   final String appId;
   final String userId;
-  final String userHash;
+  final String? userHash;
   final String? userName;
   final String? userEmail;
   final AtlasWidgetErrorHandler? onError;
@@ -17,7 +17,7 @@ class AtlasSupportWidget extends StatefulWidget {
       {Key? key,
       required this.appId,
       required this.userId,
-      required this.userHash,
+      this.userHash,
       this.userName,
       this.userEmail,
       this.onError})
