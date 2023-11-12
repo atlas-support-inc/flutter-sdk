@@ -33,3 +33,9 @@ Future<List<dynamic>> loadConversations(
     },
   );
 }
+
+final messageSide = {
+  'CUSTOMER': 1,
+  'AGENT': 2,
+  'BOT': 3,
+};

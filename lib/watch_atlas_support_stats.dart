@@ -119,7 +119,15 @@ ConversationsStats getConversationStats(dynamic conversation) {
   List messages = conversation['messages'] ?? [];
   int unread = 0;
   for (var message in messages) {
-    if (!message['read']) unread++;
+    if (!message.containsKey('read')) continue;
+    if (message['read'] == null) continue;
+    if (message['read']) continue;
+
+    if (message['side'] == messageSide['BOT']) {
+      unread++;
+    } else if (message['side'] == messageSide['AGENT']) {
+      unread++;
+    }
   }
   return ConversationsStats(
       id: conversation['id'],
