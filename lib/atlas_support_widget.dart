@@ -3,6 +3,8 @@ library atlas_support_sdk;
 import 'package:flutter/material.dart';
 import 'atlas_support_widget_state.dart';
 
+typedef AtlasWidgetNewTicketHandler = void Function(String ticketId);
+
 typedef AtlasWidgetErrorHandler = void Function(dynamic message);
 
 class AtlasSupportWidget extends StatefulWidget {
@@ -11,6 +13,7 @@ class AtlasSupportWidget extends StatefulWidget {
   final String? userHash;
   final String? userName;
   final String? userEmail;
+  final AtlasWidgetNewTicketHandler? onNewTicket;
   final AtlasWidgetErrorHandler? onError;
 
   const AtlasSupportWidget(
@@ -20,6 +23,7 @@ class AtlasSupportWidget extends StatefulWidget {
       this.userHash,
       this.userName,
       this.userEmail,
+      this.onNewTicket,
       this.onError})
       : super(key: key);
 

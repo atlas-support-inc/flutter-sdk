@@ -3,12 +3,16 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'atlas_stats.dart';
 import 'watch_atlas_support_stats.dart';
 import '_dynamic_atlas_support_widget.dart';
+import '_update_atlas_custom_fields.dart';
 
 typedef AtlasErrorHandler = void Function(dynamic message);
+
+typedef AtlasNewTicketHandler = void Function(String ticketId);
 
 class AtlasSupportSDK {
   final String appId;
   final AtlasErrorHandler? _onError;
+  final AtlasNewTicketHandler? _onNewTicket;
   String? _userId;
   String? _userHash;
   String? _userName;
@@ -23,14 +27,19 @@ class AtlasSupportSDK {
       String? userHash,
       String? userName,
       String? userEmail,
-      AtlasErrorHandler? onError})
+      AtlasErrorHandler? onError,
+      AtlasNewTicketHandler? onNewTicket})
       : _userId = userId,
         _userHash = userHash,
         _userName = userName,
         _userEmail = userEmail,
-        _onError = onError;
+        _onError = onError,
+        _onNewTicket = onNewTicket;
 
-  Widget({String? persist, AtlasErrorHandler? onError}) {
+  Widget(
+      {String? persist,
+      AtlasErrorHandler? onError,
+      AtlasNewTicketHandler? onNewTicket}) {
     return DynamicAtlasSupportWidget(
       appId: appId,
       initialUserId: _userId,
@@ -40,6 +49,10 @@ class AtlasSupportSDK {
       onError: (message) {
         onError?.call(message);
         _onError?.call(message);
+      },
+      onNewTicket: (String ticketId) {
+        onNewTicket?.call(ticketId);
+        _onNewTicket?.call(ticketId);
       },
       controller: persist != null ? _controllers[persist] : null,
       onNewController: persist != null
@@ -54,7 +67,8 @@ class AtlasSupportSDK {
     );
   }
 
-  watchStats(StatsChangeCallback listener, [AtlasErrorHandler? onError]) {
+  watchStats(StatsChangeCallback listener,
+      [AtlasErrorHandler? onError, AtlasNewTicketHandler? onNewTicket]) {
     var userId = _userId;
     var userHash = _userHash;
 
@@ -113,6 +127,12 @@ class AtlasSupportSDK {
       });
     }
   }
+
+  Future<void> updateCustomFields(
+      String ticketId, Map<String, dynamic> customFields) async {
+    await updateAtlasCustomFields(appId, ticketId, customFields,
+        userHash: _userHash);
+  }
 }
 
 AtlasSupportSDK createAtlasSupportSDK(
@@ -121,11 +141,13 @@ AtlasSupportSDK createAtlasSupportSDK(
         String? userHash,
         String? userName,
         String? userEmail,
-        AtlasErrorHandler? onError}) =>
+        AtlasErrorHandler? onError,
+        AtlasNewTicketHandler? onNewTicket}) =>
     AtlasSupportSDK(
         appId: appId,
         userId: userId,
         userHash: userHash,
         userName: userName,
         userEmail: userEmail,
-        onError: onError);
+        onError: onError,
+        onNewTicket: onNewTicket);

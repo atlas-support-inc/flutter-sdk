@@ -52,6 +52,7 @@ class DynamicAtlasSupportWidgetState extends State<DynamicAtlasSupportWidget> {
         userName: _userName,
         userEmail: _userEmail,
         onError: widget.onError,
+        onNewTicket: widget.onNewTicket,
         controller: widget.controller,
         onNewController: widget.onNewController);
   }

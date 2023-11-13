@@ -13,6 +13,7 @@ class DynamicAtlasSupportWidget extends StatefulWidget {
   final String? initialUserEmail;
   final Function changeIdentityNotifier;
   final AtlasWidgetErrorHandler? onError;
+  final AtlasWidgetNewTicketHandler? onNewTicket;
   final WebViewController? controller;
   final Function(WebViewController controller)? onNewController;
 
@@ -24,6 +25,7 @@ class DynamicAtlasSupportWidget extends StatefulWidget {
       this.initialUserName,
       this.initialUserEmail,
       this.onError,
+      this.onNewTicket,
       this.controller,
       required this.onNewController,
       required this.changeIdentityNotifier})

@@ -42,7 +42,11 @@ class _MyHomePageState extends State<MyHomePage> {
   int _unreadCount = 0;
   Function? _unsubscribe;
   AtlasSupportSDK sdk = createAtlasSupportSDK(
-      appId: appId, userId: user['id'], userHash: user['hash'], onError: print);
+      appId: appId,
+      userId: user['id'],
+      userHash: user['hash'],
+      onError: print,
+      onNewTicket: print);
 
   @override
   void initState() {
