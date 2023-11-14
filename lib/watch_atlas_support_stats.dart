@@ -83,11 +83,11 @@ Function watchAtlasSupportStats(
                 var message = jsonDecode(data['payload']['message']);
                 if (!message) return;
 
-                var conversation = stats.conversations
-                    .firstWhere((c) => c.id == message['conversationId']);
-                if (conversation != null) {
+                try {
+                  var conversation = stats.conversations
+                      .firstWhere((c) => c.id == message['conversationId']);
                   conversation.unread++;
-                } else {
+                } catch (e) {
                   stats.conversations.add(ConversationsStats(
                       id: message['conversationId'], unread: 1, closed: false));
                 }
