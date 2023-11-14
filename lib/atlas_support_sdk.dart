@@ -7,7 +7,7 @@ import '_update_atlas_custom_fields.dart';
 
 typedef AtlasErrorHandler = void Function(dynamic message);
 
-typedef AtlasNewTicketHandler = void Function(String ticketId);
+typedef AtlasNewTicketHandler = void Function(Map<String, dynamic> ticket);
 
 class AtlasSupportSDK {
   final String appId;
@@ -50,9 +50,9 @@ class AtlasSupportSDK {
         onError?.call(message);
         _onError?.call(message);
       },
-      onNewTicket: (String ticketId) {
-        onNewTicket?.call(ticketId);
-        _onNewTicket?.call(ticketId);
+      onNewTicket: (Map<String, dynamic> ticket) {
+        onNewTicket?.call(ticket);
+        _onNewTicket?.call(ticket);
       },
       controller: persist != null ? _controllers[persist] : null,
       onNewController: persist != null

@@ -57,7 +57,7 @@ Function watchAtlasSupportStats(
     }
 
     unsubscribe = connectCustomer(
-        customerId: customer['id'],
+        atlasId: customer['id'],
         onMessage: (packet) {
           try {
             var data = jsonDecode(packet);

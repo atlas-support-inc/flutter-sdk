@@ -3,7 +3,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import '_config.dart';
 
 Function connectCustomer(
-    {required String customerId, required Function onMessage}) {
+    {required String atlasId, required Function onMessage}) {
   bool killed = false;
   WebSocketChannel? channel;
   int reconnectDelay = 1000;
@@ -16,7 +16,7 @@ Function connectCustomer(
   void connect() {
     if (killed) return;
     channel = WebSocketChannel.connect(
-        Uri.parse("$atlasWebSocketBaseUrl/ws/CUSTOMER::$customerId"));
+        Uri.parse("$atlasWebSocketBaseUrl/ws/CUSTOMER::$atlasId"));
 
     channel!.stream.listen((message) {
       reconnectDelay = 1000;
@@ -30,7 +30,7 @@ Function connectCustomer(
     });
 
     channel!.sink.add(jsonEncode({
-      'channel_id': customerId,
+      'channel_id': atlasId,
       'channel_kind': 'CUSTOMER',
       'packet_type': 'SUBSCRIBE',
       'payload': {},

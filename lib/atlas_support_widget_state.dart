@@ -84,7 +84,7 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
           widget.onError
               ?.call('AtlasSupportWidget: ${message['errorMessage']}');
         } else if (message['type'] == 'atlas:newTicket') {
-          widget.onNewTicket?.call(message['ticketId']);
+          widget.onNewTicket?.call({'ticketId': message['ticketId']});
         }
       } catch (e) {
         widget.onError?.call('AtlasSupportWidget: ${package.message}');

@@ -3,7 +3,8 @@ library atlas_support_sdk;
 import 'package:flutter/material.dart';
 import 'atlas_support_widget_state.dart';
 
-typedef AtlasWidgetNewTicketHandler = void Function(String ticketId);
+typedef AtlasWidgetNewTicketHandler = void Function(
+    Map<String, dynamic> ticket);
 
 typedef AtlasWidgetErrorHandler = void Function(dynamic message);
 
