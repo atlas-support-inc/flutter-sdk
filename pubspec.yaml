@@ -1,7 +1,7 @@
 name: atlas_support_sdk
 description: Atlas customer support chat widget
-version: 1.2.2
-homepage: https://www.getatlas.io/
+version: 1.2.3
+homepage: https://www.atlas.so/
 
 environment:
   sdk: ">=2.18.6 <4.0.0"
