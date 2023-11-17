@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:atlas_support_sdk/atlas_support_sdk.dart';
 import 'package:flutter/material.dart';
 import 'package:badges/badges.dart' as badges;
@@ -42,12 +44,13 @@ class _MyHomePageState extends State<MyHomePage> {
   int _unreadCount = 0;
   Function? _unsubscribe;
   AtlasSupportSDK sdk = createAtlasSupportSDK(
-      appId: appId,
-      userId: currentUser['id'],
-      userHash: currentUser['hash'],
-      onError: print,
-      onNewTicket: print,
-      onChangeIdentity: print);
+    appId: appId,
+    userId: currentUser['id'],
+    userHash: currentUser['hash'],
+    onError: (error) => print("onError($error)"),
+    onNewTicket: (data) => print("onNewTicket($data)"),
+    onChangeIdentity: (identity) => print("onChangeIdentity($identity)"),
+  );
 
   @override
   void initState() {
@@ -100,7 +103,13 @@ class _MyHomePageState extends State<MyHomePage> {
                               icon: const Icon(Icons.refresh))
                         ],
                       ),
-                      body: sdk.Widget(persist: "main"),
+                      body: sdk.Widget(
+                        persist: "main",
+                        onNewTicket: (data) {
+                          sdk.updateCustomFields(
+                              data['ticketId'], {'test': 'flutter-sourced'});
+                        },
+                      ),
                     );
                   }));
                 }))

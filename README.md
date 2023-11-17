@@ -27,7 +27,7 @@ You can run [sample application](https://github.com/atlas-support-inc/flutter-sd
 import 'package:atlas_support_sdk/atlas_support_widget.dart';
 
 // Use widget:
-AtlasSupportWidget(appId: "", userId: "", userHash: "", onError: print)
+AtlasSupportWidget(appId: "...", userId: "...", userHash: "...", onError: print)
 ```
 
 ### Listening for stats changes
@@ -46,9 +46,9 @@ class _MyWidgetState extends State<MyWidget> {
   void initState() {
     super.initState();
     _unsubscribe = watchAtlasSupportStats(
-        appId: "",
-        userId: "",
-        userHash: "",
+        appId: "...",
+        userId: "...",
+        userHash: "...",
         onStatsChange: (stats) {
           setState(() {
             _unreadCount = stats.conversations
@@ -68,9 +68,28 @@ class _MyWidgetState extends State<MyWidget> {
 }
 ```
 
+### Updating user custom fields
+
+```dart
+import 'package:atlas_support_sdk/update_atlas_custom_fields.dart';
+
+AtlasSupportWidget(
+  appId: "...",
+  onNewTicket: (data) {
+    updateAtlasCustomFields(
+      "...", // atlasId
+      data["ticketId"], // ticketId
+      {"prop": "value"}, // customFields
+      // If needed:
+      userHash: "...",
+    );
+  },
+);
+```
+
 ### Using instance with shared settings
 
-Using SDK instance you can change user for all widgets and watches by calling `sdk.identify(userId: "", userHash: "")`.
+Using SDK instance you can change user for all widgets and watches by calling `sdk.identify(userId: "...", userHash: "...")`.
 
 ```dart
 import 'package:atlas_support_sdk/atlas_support_sdk.dart';
@@ -79,7 +98,7 @@ import 'package:atlas_support_sdk/atlas_support_sdk.dart';
 class _MyWidgetState extends State<MyWidget> {
   int _unreadCount = 0;
   Function? _unsubscribe = null;
-  AtlasSupportSDK atlasSdk = createAtlasSupportSDK(appId: "", userId: "", userHash: "", onError: print);
+  AtlasSupportSDK atlasSdk = createAtlasSupportSDK(appId: "...", userId: "...", userHash: "...", onError: print);
 
   @override
   void initState() {
@@ -101,7 +120,14 @@ class _MyWidgetState extends State<MyWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: atlasSdk.Widget()
+      body: atlasSdk.Widget(
+        onNewTicket: (data) {
+          atlasSdk.updateCustomFields(
+            data["ticketId"], // ticketId
+            {"prop": "value"}, // customFields
+          );
+        },
+      )
     );
   }
 

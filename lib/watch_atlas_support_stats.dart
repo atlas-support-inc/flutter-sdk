@@ -28,7 +28,7 @@ Function watchAtlasSupportStats(
 
   (atlasId != null
           ? Future.value(atlasId)
-          : userId != null
+          : userId != null && userId != ""
               ? login(
                       appId: appId,
                       userId: userId,
@@ -36,8 +36,7 @@ Function watchAtlasSupportStats(
                       userName: userName,
                       userEmail: userEmail)
                   .then((customer) => customer['id'])
-                  .then((customer) => customer['id'])
-              : Future.error({}))
+              : Future.error("No credentials provided for login"))
       .then((atlasId) {
     if (killed) throw Exception("Subscription canceled at login");
     return loadConversations(atlasId: atlasId, userHash: userHash)

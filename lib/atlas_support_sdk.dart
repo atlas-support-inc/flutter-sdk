@@ -4,7 +4,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'atlas_stats.dart';
 import 'watch_atlas_support_stats.dart';
 import '_dynamic_atlas_support_widget.dart';
-import '_update_atlas_custom_fields.dart';
+import 'update_atlas_custom_fields.dart';
 
 typedef AtlasErrorHandler = void Function(dynamic message);
 
@@ -91,34 +91,39 @@ class AtlasSupportSDK {
   }
 
   watchStats(StatsChangeCallback listener, [AtlasErrorHandler? onError]) {
-    if (_atlasId == null && _userId == null) {
+    if (_atlasId == null && (_userId == null || _userId == "")) {
       listener(AtlasStats(conversations: []));
     }
 
-    var close = watchAtlasSupportStats(
-        appId: appId,
-        atlasId: _atlasId,
-        userId: _userId,
-        userHash: _userHash,
-        userName: _userName,
-        userEmail: _userEmail,
-        onError: (message) {
-          onError?.call(message);
-          _onError?.call(message);
-        },
-        onStatsChange: listener);
+    var close = (_atlasId == null && (_userId == null || _userId == ""))
+        ? () {}
+        : watchAtlasSupportStats(
+            appId: appId,
+            atlasId: _atlasId,
+            userId: _userId,
+            userHash: _userHash,
+            userName: _userName,
+            userEmail: _userEmail,
+            onError: (message) {
+              onError?.call(message);
+              _onError?.call(message);
+            },
+            onStatsChange: listener);
 
     void restart(Map newIdentity) {
       close();
       listener(AtlasStats(conversations: []));
-      close = watchAtlasSupportStats(
-          appId: appId,
-          atlasId: newIdentity['atlasId'],
-          userId: newIdentity['userId'],
-          userHash: newIdentity['userHash'],
-          userName: newIdentity['userName'],
-          userEmail: newIdentity['userEmail'],
-          onStatsChange: listener);
+      close = (newIdentity['atlasId'] == null &&
+              (newIdentity['userId'] == null || newIdentity['userId'] == ""))
+          ? () {}
+          : watchAtlasSupportStats(
+              appId: appId,
+              atlasId: newIdentity['atlasId'],
+              userId: newIdentity['userId'],
+              userHash: newIdentity['userHash'],
+              userName: newIdentity['userName'],
+              userEmail: newIdentity['userEmail'],
+              onStatsChange: listener);
     }
 
     _listeners.add(restart);
@@ -153,7 +158,12 @@ class AtlasSupportSDK {
 
   Future<void> updateCustomFields(
       String ticketId, Map<String, dynamic> customFields) async {
-    await updateAtlasCustomFields(appId, ticketId, customFields,
+    var atlasId = _atlasId;
+    if (atlasId == null) {
+      return Future.error('Session is not initialized');
+    }
+
+    await updateAtlasCustomFields(atlasId, ticketId, customFields,
         userHash: _userHash);
   }
 }
@@ -181,7 +191,6 @@ AtlasSupportSDK createAtlasSupportSDK(
     String? atlasId = preferences.getString(storageAtlasIdKey);
     if (atlasId != null && sdk._userId == null || sdk._userId == '') {
       sdk.identify(atlasId: atlasId);
-    } else {
     }
   });
 

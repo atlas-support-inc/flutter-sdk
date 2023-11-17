@@ -18,7 +18,10 @@ Function connectCustomer(
     channel = WebSocketChannel.connect(
         Uri.parse("$atlasWebSocketBaseUrl/ws/CUSTOMER::$atlasId"));
 
-    channel!.stream.listen((message) {
+    var ch = channel;
+    if (ch == null) return;
+
+    ch.stream.listen((message) {
       reconnectDelay = 1000;
       if (killed) return kill();
       onMessage(message);
@@ -29,7 +32,7 @@ Function connectCustomer(
       if (reconnectDelay < 120e3) reconnectDelay *= 2;
     });
 
-    channel!.sink.add(jsonEncode({
+    ch.sink.add(jsonEncode({
       'channel_id': atlasId,
       'channel_kind': 'CUSTOMER',
       'packet_type': 'SUBSCRIBE',
