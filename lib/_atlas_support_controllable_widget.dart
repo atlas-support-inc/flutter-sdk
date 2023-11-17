@@ -13,23 +13,27 @@ class AtlasSupportControllableWidget extends AtlasSupportWidget {
   const AtlasSupportControllableWidget({
     Key? key,
     required String appId,
-    required String userId,
+    String? atlasId,
+    String? userId,
     String? userHash,
     String? userName,
     String? userEmail,
     AtlasWidgetErrorHandler? onError,
     AtlasWidgetNewTicketHandler? onNewTicket,
+    AtlasWidgetNewTicketHandler? onChangeIdentity,
     this.controller,
     this.onNewController,
   }) : super(
             key: key,
             appId: appId,
+            atlasId: atlasId,
             userId: userId,
             userHash: userHash,
             userName: userName,
             userEmail: userEmail,
             onError: onError,
-            onNewTicket: onNewTicket);
+            onNewTicket: onNewTicket,
+            onChangeIdentity: onChangeIdentity);
 
   @override
   State<AtlasSupportWidget> createState() =>

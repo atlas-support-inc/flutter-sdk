@@ -5,7 +5,7 @@ import 'test_users.dart';
 
 var firstUser = user;
 var secondUser = userEmpty;
-var currentUser = firstUser;
+var currentUser = secondUser;
 
 void main() {
   runApp(const MyApp());
@@ -43,10 +43,11 @@ class _MyHomePageState extends State<MyHomePage> {
   Function? _unsubscribe;
   AtlasSupportSDK sdk = createAtlasSupportSDK(
       appId: appId,
-      userId: user['id'],
-      userHash: user['hash'],
+      userId: currentUser['id'],
+      userHash: currentUser['hash'],
       onError: print,
-      onNewTicket: print);
+      onNewTicket: print,
+      onChangeIdentity: print);
 
   @override
   void initState() {

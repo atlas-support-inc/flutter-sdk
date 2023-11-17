@@ -14,7 +14,8 @@ typedef AtlasWatcherErrorHandler = void Function(dynamic message);
 
 Function watchAtlasSupportStats(
     {required String appId,
-    required String userId,
+    String? atlasId,
+    String? userId,
     String? userHash,
     String? userName,
     String? userEmail,
@@ -23,20 +24,28 @@ Function watchAtlasSupportStats(
   var killed = false;
   Function? unsubscribe;
 
-  login(
-          appId: appId,
-          userId: userId,
-          userHash: userHash,
-          userName: userName,
-          userEmail: userEmail)
-      .then((customer) {
+  if (atlasId == null && userId == null) return () {};
+
+  (atlasId != null
+          ? Future.value(atlasId)
+          : userId != null
+              ? login(
+                      appId: appId,
+                      userId: userId,
+                      userHash: userHash,
+                      userName: userName,
+                      userEmail: userEmail)
+                  .then((customer) => customer['id'])
+                  .then((customer) => customer['id'])
+              : Future.error({}))
+      .then((atlasId) {
     if (killed) throw Exception("Subscription canceled at login");
-    return loadConversations(atlasId: customer['id'], userHash: userHash)
-        .then((conversations) => [customer, conversations]);
+    return loadConversations(atlasId: atlasId, userHash: userHash)
+        .then((conversations) => [atlasId, conversations]);
   }).then((results) {
     if (killed) throw Exception("Subscription canceled");
 
-    var customer = results[0];
+    var atlasId = results[0];
     final conversations = results[1] as List<dynamic>;
 
     var conversationsStats = conversations.map(getConversationStats).toList();
@@ -57,7 +66,7 @@ Function watchAtlasSupportStats(
     }
 
     unsubscribe = connectCustomer(
-        atlasId: customer['id'],
+        atlasId: atlasId,
         onMessage: (packet) {
           try {
             var data = jsonDecode(packet);
@@ -120,8 +129,7 @@ ConversationsStats getConversationStats(dynamic conversation) {
   int unread = 0;
   for (var message in messages) {
     if (!message.containsKey('read')) continue;
-    if (message['read'] == null) continue;
-    if (message['read']) continue;
+    if (message['read'] == true) continue;
 
     if (message['side'] == messageSide['BOT']) {
       unread++;

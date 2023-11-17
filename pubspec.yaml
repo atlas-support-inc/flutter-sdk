@@ -1,6 +1,6 @@
 name: atlas_support_sdk
 description: Atlas customer support chat widget
-version: 1.2.3
+version: 1.3.0
 homepage: https://www.atlas.so/
 
 environment:
@@ -13,6 +13,8 @@ dependencies:
 
   http: ^0.13.5
   web_socket_channel: ^2.2.0
+
+  shared_preferences: ^2.2.2
 
   webview_flutter: ^4.0.0
   webview_flutter_android: ^3.1.1

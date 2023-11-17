@@ -45,7 +45,12 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
   _loadPage(WebViewController controller) {
     var url = Uri.parse(atlasWidgetBaseUrl).replace(queryParameters: {
       'appId': widget.appId,
-      'userId': widget.userId,
+      ...widget.atlasId == null || widget.atlasId == ""
+          ? {}
+          : {'atlasId': widget.atlasId},
+      ...widget.userId == null || widget.userId == ""
+          ? {}
+          : {'userId': widget.userId},
       ...widget.userHash == null || widget.userHash == ""
           ? {}
           : {'userHash': widget.userHash},
@@ -85,6 +90,8 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
               ?.call('AtlasSupportWidget: ${message['errorMessage']}');
         } else if (message['type'] == 'atlas:newTicket') {
           widget.onNewTicket?.call({'ticketId': message['ticketId']});
+        } else if (message['type'] == 'atlas:changeIdentity') {
+          widget.onChangeIdentity?.call({'atlasId': message['atlasId']});
         }
       } catch (e) {
         widget.onError?.call('AtlasSupportWidget: ${package.message}');
