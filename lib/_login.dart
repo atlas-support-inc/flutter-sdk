@@ -19,8 +19,8 @@ Future login(
             'appId': appId,
             'userId': userId,
             ...(userHash == null ? {} : {'userHash': userHash}),
-            ...(userName == null ? {} : {'userName': userName}),
-            ...(userEmail == null ? {} : {'userEmail': userEmail}),
+            ...(userName == null ? {} : {'name': userName}),
+            ...(userEmail == null ? {} : {'email': userEmail}),
           }))
       .then(
     (response) {
@@ -32,9 +32,9 @@ Future login(
 
       try {
         var body = jsonDecode(text);
-        var errorMessage = 
-          body is Map && 
-          body.containsKey('detail') && 
+        var errorMessage =
+          body is Map &&
+          body.containsKey('detail') &&
           body['detail'] is String
             ? body['detail']
             : jsonEncode(body);
