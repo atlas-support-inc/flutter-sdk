@@ -7,8 +7,9 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
-import '_config.dart';
 import 'atlas_support_widget.dart';
+import '_config.dart';
+import '_get_package_version.dart';
 
 class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
   late final WebViewController _controller;
@@ -42,24 +43,15 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
     return WebViewWidget(controller: _controller);
   }
 
-  _loadPage(WebViewController controller) {
+  _loadPage(WebViewController controller) async {
     var url = Uri.parse(atlasWidgetBaseUrl).replace(queryParameters: {
+      'sdkVersion': 'flutter@${await getPackageVersion()}',
       'appId': widget.appId,
-      ...widget.atlasId == null || widget.atlasId == ""
-          ? {}
-          : {'atlasId': widget.atlasId},
-      ...widget.userId == null || widget.userId == ""
-          ? {}
-          : {'userId': widget.userId},
-      ...widget.userHash == null || widget.userHash == ""
-          ? {}
-          : {'userHash': widget.userHash},
-      ...widget.userName == null || widget.userName == ""
-          ? {}
-          : {'userName': widget.userName},
-      ...widget.userEmail == null || widget.userEmail == ""
-          ? {}
-          : {'userEmail': widget.userEmail},
+      ...widget.atlasId == null || widget.atlasId == "" ? {} : {'atlasId': widget.atlasId},
+      ...widget.userId == null || widget.userId == "" ? {} : {'userId': widget.userId},
+      ...widget.userHash == null || widget.userHash == "" ? {} : {'userHash': widget.userHash},
+      ...widget.userName == null || widget.userName == "" ? {} : {'userName': widget.userName},
+      ...widget.userEmail == null || widget.userEmail == "" ? {} : {'userEmail': widget.userEmail},
     });
     controller.loadRequest(url);
   }
@@ -75,19 +67,16 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
       params = const PlatformWebViewControllerCreationParams();
     }
 
-    final WebViewController controller =
-        WebViewController.fromPlatformCreationParams(params);
+    final WebViewController controller = WebViewController.fromPlatformCreationParams(params);
 
     controller.setJavaScriptMode(JavaScriptMode.unrestricted);
     _loadPage(controller);
 
-    controller.addJavaScriptChannel("FlutterWebView",
-        onMessageReceived: (package) {
+    controller.addJavaScriptChannel("FlutterWebView", onMessageReceived: (package) {
       try {
         final message = (jsonDecode(package.message) as Map<String, dynamic>);
         if (message['type'] == 'atlas:error') {
-          widget.onError
-              ?.call('AtlasSupportWidget: ${message['errorMessage']}');
+          widget.onError?.call('AtlasSupportWidget: ${message['errorMessage']}');
         } else if (message['type'] == 'atlas:newTicket') {
           widget.onNewTicket?.call({'ticketId': message['ticketId']});
         } else if (message['type'] == 'atlas:changeIdentity') {
@@ -100,8 +89,7 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
 
     if (controller.platform is AndroidWebViewController) {
       AndroidWebViewController.enableDebugging(true);
-      (controller.platform as AndroidWebViewController)
-          .setMediaPlaybackRequiresUserGesture(false);
+      (controller.platform as AndroidWebViewController).setMediaPlaybackRequiresUserGesture(false);
     }
 
     return controller;
