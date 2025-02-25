@@ -105,6 +105,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                       body: sdk.Widget(
                         persist: "main",
+                        query: "chatbotKey: embed_test",
                         onNewTicket: (data) {
                           sdk.updateCustomFields(
                               data['ticketId'], {'test': 'flutter-sourced'});

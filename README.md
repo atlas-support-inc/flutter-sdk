@@ -141,3 +141,17 @@ Use `persist` property with the unique string value at any place and after the i
 ```dart
 sdk.Widget(persist: "main")
 ```
+
+### Widget `query` parameter
+
+An optional `query` parameter in string format. The `query` is used to configure the behavior or content of the embeded chat widget.
+
+```dart
+AtlasSupportWidget(appId: "...", query: "chatbotKey: key; prefer: last")
+// or
+atlasSdk.Widget(query: "chatbotKey: key; prefer: last")
+```
+
+`chatbotKey: key`: (optional) Specifies the chatbot that has to be started immediately when AtlasFragment is loaded
+
+`prefer: last`: (optional) Instead of starting new chatbot everytime it will open the last not completed chatbot if exists
