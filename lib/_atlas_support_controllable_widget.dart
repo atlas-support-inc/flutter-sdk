@@ -13,6 +13,7 @@ class AtlasSupportControllableWidget extends AtlasSupportWidget {
   const AtlasSupportControllableWidget({
     Key? key,
     required String appId,
+    String? query,
     String? atlasId,
     String? userId,
     String? userHash,
@@ -26,6 +27,7 @@ class AtlasSupportControllableWidget extends AtlasSupportWidget {
   }) : super(
             key: key,
             appId: appId,
+            query: query,
             atlasId: atlasId,
             userId: userId,
             userHash: userHash,

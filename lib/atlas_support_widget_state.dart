@@ -47,6 +47,7 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
     var url = Uri.parse(atlasWidgetBaseUrl).replace(queryParameters: {
       'sdkVersion': 'flutter@${await getPackageVersion()}',
       'appId': widget.appId,
+      ...widget.query == null || widget.query == "" ? {} : {'query': widget.query!.replaceAll(RegExp(r'\s'), '')},
       ...widget.atlasId == null || widget.atlasId == "" ? {} : {'atlasId': widget.atlasId},
       ...widget.userId == null || widget.userId == "" ? {} : {'userId': widget.userId},
       ...widget.userHash == null || widget.userHash == "" ? {} : {'userHash': widget.userHash},

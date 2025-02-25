@@ -50,11 +50,13 @@ class AtlasSupportSDK {
   // ignore: non_constant_identifier_names
   Widget(
       {String? persist,
+      String? query,
       AtlasErrorHandler? onError,
       AtlasNewTicketHandler? onNewTicket,
       AtlasChangeIdentityHandler? onChangeIdentity}) {
     return DynamicAtlasSupportWidget(
       appId: appId,
+      query: query,
       initialAtlasId: _atlasId,
       initialUserId: _userId,
       initialUserHash: _userHash,
