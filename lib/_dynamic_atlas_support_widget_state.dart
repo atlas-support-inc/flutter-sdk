@@ -6,6 +6,7 @@ import '_atlas_support_controllable_widget.dart';
 import '_dynamic_atlas_support_widget.dart';
 
 class DynamicAtlasSupportWidgetState extends State<DynamicAtlasSupportWidget> {
+  String? _query;
   String? _atlasId;
   String? _userId;
   String? _userHash;
@@ -16,6 +17,7 @@ class DynamicAtlasSupportWidgetState extends State<DynamicAtlasSupportWidget> {
   @override
   void initState() {
     super.initState();
+    _query = widget.query;
     _atlasId = widget.initialAtlasId;
     _userId = widget.initialUserId;
     _userHash = widget.initialUserHash;
@@ -43,6 +45,7 @@ class DynamicAtlasSupportWidgetState extends State<DynamicAtlasSupportWidget> {
   Widget build(BuildContext context) {
     return AtlasSupportControllableWidget(
         appId: widget.appId,
+        query: _query,
         atlasId: _atlasId,
         userId: _userId,
         userHash: _userHash,

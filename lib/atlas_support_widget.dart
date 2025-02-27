@@ -13,6 +13,7 @@ typedef AtlasWidgetErrorHandler = void Function(dynamic message);
 
 class AtlasSupportWidget extends StatefulWidget {
   final String appId;
+  final String? query;
   final String? atlasId;
   final String? userId;
   final String? userHash;
@@ -25,6 +26,7 @@ class AtlasSupportWidget extends StatefulWidget {
   const AtlasSupportWidget(
       {Key? key,
       required this.appId,
+      this.query,
       this.atlasId,
       this.userId,
       this.userHash,

@@ -7,6 +7,7 @@ import 'atlas_support_widget.dart';
 
 class DynamicAtlasSupportWidget extends StatefulWidget {
   final String appId;
+  final String? query;
   final String? initialAtlasId;
   final String? initialUserId;
   final String? initialUserHash;
@@ -22,6 +23,7 @@ class DynamicAtlasSupportWidget extends StatefulWidget {
   const DynamicAtlasSupportWidget(
       {Key? key,
       required this.appId,
+      this.query,
       this.initialAtlasId,
       this.initialUserId,
       this.initialUserHash,
