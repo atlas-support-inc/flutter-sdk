@@ -147,11 +147,17 @@ sdk.Widget(persist: "main")
 An optional `query` parameter in string format. The `query` is used to configure the behavior or content of the embeded chat widget.
 
 ```dart
-AtlasSupportWidget(appId: "...", query: "chatbotKey: key; prefer: last")
+// Initiate widget and immediately start chatbot with report_bug key (chatbotKey: report_bug), or open the last one if exists (prefer: last)
+AtlasSupportWidget(appId: "...", query: "chatbotKey: report_bug; prefer: last")
 // or
-atlasSdk.Widget(query: "chatbotKey: key; prefer: last")
+atlasSdk.Widget(query: "chatbotKey: report_bug; prefer: last")
+
+// Initiate widget and immediately open helpcenter
+atlasSdk.Widget(query: "open: helpcenter")
 ```
 
 `chatbotKey: key`: (optional) Specifies the chatbot that has to be started immediately when AtlasFragment is loaded
 
 `prefer: last`: (optional) Instead of starting new chatbot everytime it will open the last not completed chatbot if exists
+
+`open: helpcenter` Starts widget with HelpCenter screen
