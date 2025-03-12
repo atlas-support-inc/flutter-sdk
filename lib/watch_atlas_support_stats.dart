@@ -17,8 +17,9 @@ Function watchAtlasSupportStats(
     String? atlasId,
     String? userId,
     String? userHash,
-    String? userName,
-    String? userEmail,
+    String? name,
+    String? email,
+    String? phoneNumber,
     AtlasWatcherErrorHandler? onError,
     required StatsChangeCallback onStatsChange}) {
   var killed = false;
@@ -33,8 +34,9 @@ Function watchAtlasSupportStats(
                       appId: appId,
                       userId: userId,
                       userHash: userHash,
-                      userName: userName,
-                      userEmail: userEmail)
+                      name: name,
+                      email: email,
+                      phoneNumber: phoneNumber)
                   .then((customer) => customer['id'])
               : Future.error("No credentials provided for login"))
       .then((atlasId) {

@@ -26,8 +26,9 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
     super.didUpdateWidget(oldWidget);
     var hasChanged = widget.userId != oldWidget.userId ||
         widget.userHash != oldWidget.userHash ||
-        widget.userName != oldWidget.userName ||
-        widget.userEmail != oldWidget.userEmail;
+        widget.name != oldWidget.name ||
+        widget.email != oldWidget.email ||
+        widget.phoneNumber != oldWidget.phoneNumber;
     if (hasChanged) {
       _loadPage(_controller);
     }
@@ -51,8 +52,9 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
       ...widget.atlasId == null || widget.atlasId == "" ? {} : {'atlasId': widget.atlasId},
       ...widget.userId == null || widget.userId == "" ? {} : {'userId': widget.userId},
       ...widget.userHash == null || widget.userHash == "" ? {} : {'userHash': widget.userHash},
-      ...widget.userName == null || widget.userName == "" ? {} : {'userName': widget.userName},
-      ...widget.userEmail == null || widget.userEmail == "" ? {} : {'userEmail': widget.userEmail},
+      ...widget.name == null || widget.name == "" ? {} : {'userName': widget.name},
+      ...widget.email == null || widget.email == "" ? {} : {'userEmail': widget.email},
+      ...widget.phoneNumber == null || widget.phoneNumber == "" ? {} : {'userPhone': widget.phoneNumber},
     });
     controller.loadRequest(url);
   }

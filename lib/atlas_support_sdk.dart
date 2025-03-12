@@ -22,8 +22,9 @@ class AtlasSupportSDK {
   String? _atlasId;
   String? _userId;
   String? _userHash;
-  String? _userName;
-  String? _userEmail;
+  String? _name;
+  String? _email;
+  String? _phoneNumber;
 
   final List<Function> _listeners = [];
   final Map<String, WebViewController> _controllers = {};
@@ -33,16 +34,18 @@ class AtlasSupportSDK {
       String? atlasId,
       String? userId,
       String? userHash,
-      String? userName,
-      String? userEmail,
+      String? name,
+      String? email,
+      String? phoneNumber,
       AtlasErrorHandler? onError,
       AtlasNewTicketHandler? onChangeIdentity,
       AtlasNewTicketHandler? onNewTicket})
       : _atlasId = atlasId,
         _userId = userId,
         _userHash = userHash,
-        _userName = userName,
-        _userEmail = userEmail,
+        _name = name,
+        _email = email,
+        _phoneNumber = phoneNumber,
         _onError = onError,
         _onChangeIdentity = onChangeIdentity,
         _onNewTicket = onNewTicket;
@@ -60,8 +63,9 @@ class AtlasSupportSDK {
       initialAtlasId: _atlasId,
       initialUserId: _userId,
       initialUserHash: _userHash,
-      initialUserName: _userName,
-      initialUserEmail: _userEmail,
+      initialUserName: _name,
+      initialUserEmail: _email,
+      initialUserPhoneNumber: _phoneNumber,
       onError: (message) {
         onError?.call(message);
         _onError?.call(message);
@@ -104,8 +108,9 @@ class AtlasSupportSDK {
             atlasId: _atlasId,
             userId: _userId,
             userHash: _userHash,
-            userName: _userName,
-            userEmail: _userEmail,
+            name: _name,
+            email: _email,
+            phoneNumber: _phoneNumber,
             onError: (message) {
               onError?.call(message);
               _onError?.call(message);
@@ -123,8 +128,9 @@ class AtlasSupportSDK {
               atlasId: newIdentity['atlasId'],
               userId: newIdentity['userId'],
               userHash: newIdentity['userHash'],
-              userName: newIdentity['userName'],
-              userEmail: newIdentity['userEmail'],
+              name: newIdentity['name'],
+              email: newIdentity['email'],
+              phoneNumber: newIdentity['phoneNumber'],
               onStatsChange: listener);
     }
 
@@ -137,13 +143,15 @@ class AtlasSupportSDK {
       {String? atlasId,
       String? userId,
       String? userHash,
-      String? userName,
-      String? userEmail}) {
+      String? name,
+      String? email,
+      String? phoneNumber}) {
     _atlasId = atlasId;
     _userId = userId;
     _userHash = userHash;
-    _userName = userName;
-    _userEmail = userEmail;
+    _name = name;
+    _email = email;
+    _phoneNumber = phoneNumber;
 
     _controllers.clear();
 
@@ -152,8 +160,9 @@ class AtlasSupportSDK {
         'atlasId': _atlasId,
         'userId': _userId,
         'userHash': _userHash,
-        'userName': _userName,
-        'userEmail': _userEmail
+        'name': _name,
+        'email': _email,
+        'phoneNumber': _phoneNumber
       });
     }
   }
@@ -174,8 +183,9 @@ AtlasSupportSDK createAtlasSupportSDK(
     {required String appId,
     String? userId,
     String? userHash,
-    String? userName,
-    String? userEmail,
+    String? name,
+    String? email,
+    String? phoneNumber,
     AtlasErrorHandler? onError,
     AtlasNewTicketHandler? onNewTicket,
     AtlasChangeIdentityHandler? onChangeIdentity}) {
@@ -183,8 +193,9 @@ AtlasSupportSDK createAtlasSupportSDK(
       appId: appId,
       userId: userId,
       userHash: userHash,
-      userName: userName,
-      userEmail: userEmail,
+      name: name,
+      email: email,
+      phoneNumber: phoneNumber,
       onError: onError,
       onNewTicket: onNewTicket,
       onChangeIdentity: onChangeIdentity);

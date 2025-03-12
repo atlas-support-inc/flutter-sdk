@@ -8,8 +8,9 @@ Future login(
     {required String appId,
     required String userId,
     String? userHash,
-    String? userName,
-    String? userEmail}) {
+    String? name,
+    String? email,
+    String? phoneNumber}) {
   var uri = Uri.parse(loginUrl);
 
   return http
@@ -19,8 +20,9 @@ Future login(
             'appId': appId,
             'userId': userId,
             ...(userHash == null ? {} : {'userHash': userHash}),
-            ...(userName == null ? {} : {'name': userName}),
-            ...(userEmail == null ? {} : {'email': userEmail}),
+            ...(name == null ? {} : {'name': name}),
+            ...(email == null ? {} : {'email': email}),
+            ...(phoneNumber == null ? {} : {'phoneNumber': phoneNumber}),
           }))
       .then(
     (response) {

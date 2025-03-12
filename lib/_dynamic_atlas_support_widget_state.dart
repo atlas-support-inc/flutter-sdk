@@ -10,8 +10,9 @@ class DynamicAtlasSupportWidgetState extends State<DynamicAtlasSupportWidget> {
   String? _atlasId;
   String? _userId;
   String? _userHash;
-  String? _userName;
-  String? _userEmail;
+  String? _name;
+  String? _email;
+  String? _phoneNumber;
   Function? _destroyNotifier;
 
   @override
@@ -21,16 +22,18 @@ class DynamicAtlasSupportWidgetState extends State<DynamicAtlasSupportWidget> {
     _atlasId = widget.initialAtlasId;
     _userId = widget.initialUserId;
     _userHash = widget.initialUserHash;
-    _userName = widget.initialUserName;
-    _userEmail = widget.initialUserEmail;
+    _name = widget.initialUserName;
+    _email = widget.initialUserEmail;
+    _phoneNumber = widget.initialUserPhoneNumber;
 
     _destroyNotifier = widget.registerIdentityChangeListener((newIdentity) {
       setState(() {
         _atlasId = newIdentity['atlasId'];
         _userId = newIdentity['userId'];
         _userHash = newIdentity['userHash'];
-        _userName = newIdentity['userName'];
-        _userEmail = newIdentity['userEmail'];
+        _name = newIdentity['name'];
+        _email = newIdentity['email'];
+        _phoneNumber = newIdentity['phoneNumber'];
       });
     });
   }
@@ -49,8 +52,9 @@ class DynamicAtlasSupportWidgetState extends State<DynamicAtlasSupportWidget> {
         atlasId: _atlasId,
         userId: _userId,
         userHash: _userHash,
-        userName: _userName,
-        userEmail: _userEmail,
+        name: _name,
+        email: _email,
+        phoneNumber: _phoneNumber,
         onError: widget.onError,
         onNewTicket: widget.onNewTicket,
         onChangeIdentity: widget.onChangeIdentity,
