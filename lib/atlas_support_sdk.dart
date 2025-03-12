@@ -1,3 +1,4 @@
+import 'package:atlas_support_sdk/_login.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -13,6 +14,134 @@ typedef AtlasNewTicketHandler = void Function(Map<String, dynamic> ticket);
 typedef AtlasChangeIdentityHandler = void Function(Map<String, dynamic> data);
 
 const storageAtlasIdKey = '@atlas.so/atlasId';
+
+void log(dynamic message) {
+  // ignore: avoid_print
+  print(message);
+}
+
+class AtlasSDK {
+  static String? _appId;
+  static String? _atlasId;
+
+  static void _forceReload() {
+    // TODO: Force all SDK modules to reload
+    log("In $_appId with $_atlasId");
+  }
+
+  static void setAppId(String appId) {
+    if (_appId == appId) return;
+
+    _appId = appId;
+    _atlasId = null;
+    _forceReload();
+
+    SharedPreferences.getInstance().then((preferences) {
+      String? atlasId = preferences.getString(storageAtlasIdKey);
+      if (atlasId == null) return;
+      if (_atlasId != null) return;
+
+      _atlasId = atlasId;
+      _forceReload();
+    });
+  }
+
+  static void logout() {
+    _atlasId = null;
+    _forceReload();
+  }
+
+  static Future<void> identify(
+      {required String userId, String? userHash, String? name, String? email, String? phoneNumber}) async {
+    var appId = _appId;
+    if (appId == null || appId == "") {
+      log("AtlasSupportSDK: Cannot call identify() without App ID set");
+      return;
+    }
+
+    return login(appId: appId, userId: userId, userHash: userHash, name: name, email: email, phoneNumber: phoneNumber)
+        .then((customer) {
+      var atlasId = customer['id'];
+      if (_atlasId == atlasId) return;
+      if (atlasId is! String) {
+        log("AtlasSupportSDK: Invalid atlasId type. Expected String, got ${atlasId.runtimeType}");
+        return;
+      }
+
+      SharedPreferences.getInstance().then((preferences) {
+        preferences.setString(storageAtlasIdKey, atlasId);
+      });
+
+      _atlasId = atlasId;
+      _forceReload();
+    }).catchError((error) {
+      // TODO: send to error handler
+      log(error);
+      logout();
+    });
+  }
+
+  Future<void> updateCustomFields(String ticketId, Map<String, dynamic> customFields) async {
+    var appId = _appId;
+    if (appId == null || appId == "") {
+      log("AtlasSupportSDK: Cannot call identify() without App ID set");
+      return;
+    }
+  }
+
+  watchStats(StatsChangeCallback listener, [AtlasErrorHandler? onError]) {
+    var appId = _appId;
+    if (appId == null || appId == "") {
+      log("AtlasSupportSDK: Cannot call identify() without App ID set");
+      return;
+    }
+  }
+
+  // ignore: non_constant_identifier_names
+  static Widget({String? query, String? persist}) {
+    var appId = _appId;
+    if (appId == null || appId == "") {
+      log("AtlasSupportSDK: Cannot call identify() without App ID set");
+      return;
+    }
+
+    log("App ID: $appId");
+
+    return DynamicAtlasSupportWidget(
+      appId: appId,
+      query: query,
+      initialAtlasId: _atlasId,
+      // onError: (message) {
+      //   onError?.call(message);
+      //   _onError?.call(message);
+      // },
+      // onNewTicket: (Map<String, dynamic> ticket) {
+      //   onNewTicket?.call(ticket);
+      //   _onNewTicket?.call(ticket);
+      // },
+      // onChangeIdentity: (Map<String, dynamic> data) async {
+      //   final SharedPreferences preferences = await SharedPreferences.getInstance();
+      //   preferences.setString(storageAtlasIdKey, data['atlasId']);
+
+      //   identify(atlasId: data['atlasId']);
+      //   onChangeIdentity?.call(data);
+      //   _onChangeIdentity?.call(data);
+      // },
+      // controller: persist != null ? _controllers[persist] : null,
+      onNewController: null,
+      registerIdentityChangeListener: (Function listener) {
+        // _listeners.add(listener);
+        // return () => _listeners.remove(listener);
+      },
+    );
+  }
+
+  onError(AtlasErrorHandler? onError) {}
+
+  onNewTicket(AtlasNewTicketHandler? onNewTicket) {}
+
+  onChangeIdentity(AtlasChangeIdentityHandler? onChangeIdentity) {}
+}
 
 class AtlasSupportSDK {
   final String appId;
@@ -75,8 +204,7 @@ class AtlasSupportSDK {
         _onNewTicket?.call(ticket);
       },
       onChangeIdentity: (Map<String, dynamic> data) async {
-        final SharedPreferences preferences =
-            await SharedPreferences.getInstance();
+        final SharedPreferences preferences = await SharedPreferences.getInstance();
         preferences.setString(storageAtlasIdKey, data['atlasId']);
 
         identify(atlasId: data['atlasId']);
@@ -120,8 +248,7 @@ class AtlasSupportSDK {
     void restart(Map newIdentity) {
       close();
       listener(AtlasStats(conversations: []));
-      close = (newIdentity['atlasId'] == null &&
-              (newIdentity['userId'] == null || newIdentity['userId'] == ""))
+      close = (newIdentity['atlasId'] == null && (newIdentity['userId'] == null || newIdentity['userId'] == ""))
           ? () {}
           : watchAtlasSupportStats(
               appId: appId,
@@ -139,13 +266,7 @@ class AtlasSupportSDK {
     return close;
   }
 
-  void identify(
-      {String? atlasId,
-      String? userId,
-      String? userHash,
-      String? name,
-      String? email,
-      String? phoneNumber}) {
+  void identify({String? atlasId, String? userId, String? userHash, String? name, String? email, String? phoneNumber}) {
     _atlasId = atlasId;
     _userId = userId;
     _userHash = userHash;
@@ -167,15 +288,13 @@ class AtlasSupportSDK {
     }
   }
 
-  Future<void> updateCustomFields(
-      String ticketId, Map<String, dynamic> customFields) async {
+  Future<void> updateCustomFields(String ticketId, Map<String, dynamic> customFields) async {
     var atlasId = _atlasId;
     if (atlasId == null) {
       return Future.error('Session is not initialized');
     }
 
-    await updateAtlasCustomFields(atlasId, ticketId, customFields,
-        userHash: _userHash);
+    await updateAtlasCustomFields(atlasId, ticketId, customFields, userHash: _userHash);
   }
 }
 

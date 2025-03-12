@@ -35,11 +35,7 @@ Future login(
       try {
         var body = jsonDecode(text);
         var errorMessage =
-          body is Map &&
-          body.containsKey('detail') &&
-          body['detail'] is String
-            ? body['detail']
-            : jsonEncode(body);
+            body is Map && body.containsKey('detail') && body['detail'] is String ? body['detail'] : jsonEncode(body);
 
         throw Exception("Login failed: $errorMessage");
       } catch (err) {}
