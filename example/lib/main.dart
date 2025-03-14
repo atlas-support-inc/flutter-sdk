@@ -3,11 +3,6 @@
 import 'package:atlas_support_sdk/atlas_support_sdk.dart';
 import 'package:flutter/material.dart';
 import 'package:badges/badges.dart' as badges;
-import 'test_users.dart';
-
-var firstUser = user;
-var secondUser = userEmpty;
-var currentUser = secondUser;
 
 var appId = 'w51lhvyut7';
 
@@ -54,9 +49,6 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _unreadCount = 0;
   Function? _dispose;
-  AtlasSupportSDK sdk = createAtlasSupportSDK(
-    appId: appId,
-  );
 
   final TextEditingController _userIdController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
@@ -83,7 +75,11 @@ class _MyHomePageState extends State<MyHomePage> {
         _userIdController.text = '';
         print("onChangeIdentity(null)");
       } else {
-        _userIdController.text = identity.atlasId == userAdam.atlasId ? userAdam.userId : identity.atlasId == userSara.atlasId ? userSara.userId : '';
+        _userIdController.text = identity.atlasId == userAdam.atlasId
+            ? userAdam.userId
+            : identity.atlasId == userSara.atlasId
+                ? userSara.userId
+                : '';
         print("onChangeIdentity({atlasId: ${identity.atlasId}})");
       }
     });
@@ -98,13 +94,15 @@ class _MyHomePageState extends State<MyHomePage> {
 
     // Watch for new conversations
 
-    // var disposeChatStartedHandler = AtlasSDK.onChatStarted((ticket) => print("onChatStarted($ticket)"));
+    var disposeChatStartedHandler = AtlasSDK.onChatStarted((chatStarted) => print("onChatStarted($chatStarted)"));
+    var disposeNewTicketHandler = AtlasSDK.onNewTicket((newTicket) => print("onNewTicket($newTicket)"));
 
     _dispose = () {
       disposeErrorHandler();
       disposeChangeIdentityHandler();
       disposeStatsHandler();
-      // disposeChatStartedHandler();
+      disposeChatStartedHandler();
+      disposeNewTicketHandler();
     };
   }
 
@@ -140,10 +138,10 @@ class _MyHomePageState extends State<MyHomePage> {
                             child: SafeArea(
                               child: Scaffold(
                                 body: AtlasSDK.Widget(
-                                  // query: "chatbotKey: order",
+                                  query: "chatbotKey: order",
                                   // persist: "global",
                                   onChatStarted: (data) {
-                                    // sdk.updateCustomFields(data['ticketId'], {'test': 'flutter-sourced'});
+                                    // AtlasSDK.updateCustomFields(data['ticketId'], {'test': 'flutter-sourced'});
                                   },
                                 ),
                               ),

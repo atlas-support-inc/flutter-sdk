@@ -3,144 +3,131 @@ library atlas_support_sdk;
 import 'dart:convert';
 
 import '_connect_customer.dart';
-import '_load_conversations.dart';
-import 'atlas_stats.dart';
-import 'conversation_stats.dart';
 
-import '_login.dart';
+class ConversationStats {
+  final String id;
+  int unread;
+  bool closed;
 
-typedef StatsChangeCallback = void Function(AtlasStats stats);
+  ConversationStats({
+    required this.id,
+    required this.unread,
+    required this.closed,
+  });
+}
+
+class AtlasConversationsStats {
+  List<ConversationStats> conversations;
+
+  AtlasConversationsStats({required this.conversations});
+}
+
+typedef AtlasWatcherStatsChangeHandler = void Function(AtlasConversationsStats stats);
 typedef AtlasWatcherErrorHandler = void Function(dynamic message);
 
 Function watchAtlasSupportStats(
     {required String appId,
-    String? atlasId,
-    String? userId,
-    String? userHash,
-    String? name,
-    String? email,
-    String? phoneNumber,
-    AtlasWatcherErrorHandler? onError,
-    required StatsChangeCallback onStatsChange}) {
-  var killed = false;
+    required String atlasId,
+    required AtlasWatcherStatsChangeHandler onStatsChange,
+    AtlasWatcherErrorHandler? onError}) {
   Function? unsubscribe;
 
-  if (atlasId == null && userId == null) return () {};
+  var stats = AtlasConversationsStats(conversations: []);
 
-  (atlasId != null
-          ? Future.value(atlasId)
-          : userId != null && userId != ""
-              ? login(
-                      appId: appId,
-                      userId: userId,
-                      userHash: userHash,
-                      name: name,
-                      email: email,
-                      phoneNumber: phoneNumber)
-                  .then((customer) => customer['id'])
-              : Future.error("No credentials provided for login"))
-      .then((atlasId) {
-    if (killed) throw Exception("Subscription canceled at login");
-    return loadConversations(atlasId: atlasId, userHash: userHash)
-        .then((conversations) => [atlasId, conversations]);
-  }).then((results) {
-    if (killed) throw Exception("Subscription canceled");
+  onStatsChange(stats);
 
-    var atlasId = results[0];
-    final conversations = results[1] as List<dynamic>;
-
-    var conversationsStats = conversations.map(getConversationStats).toList();
-    var stats = AtlasStats(conversations: conversationsStats);
-
-    onStatsChange(stats);
-
-    void updateConversationStats(conversation) {
-      var conversationStats = getConversationStats(conversation);
-      var conversationIndex =
-          stats.conversations.indexWhere((c) => c.id == conversation['id']);
-      if (conversationIndex == -1) {
-        stats.conversations.add(conversationStats);
-      } else {
-        stats.conversations[conversationIndex] = conversationStats;
-      }
-      onStatsChange(stats);
+  void updateConversationStats(conversation) {
+    var conversationStats = getConversationStats(conversation);
+    var conversationIndex = stats.conversations.indexWhere((c) => c.id == conversation['id']);
+    if (conversationIndex == -1) {
+      stats.conversations.add(conversationStats);
+    } else {
+      stats.conversations[conversationIndex] = conversationStats;
     }
+    onStatsChange(stats);
+  }
 
-    unsubscribe = connectCustomer(
-        atlasId: atlasId,
-        onMessage: (packet) {
-          try {
-            var data = jsonDecode(packet);
-            switch (data['packet_type']) {
-              case 'CONVERSATION_UPDATED':
-                updateConversationStats(data['payload']['conversation']);
-                break;
-              case 'AGENT_MESSAGE':
-              case 'BOT_MESSAGE':
+  unsubscribe = connectCustomer(
+      atlasId: atlasId,
+      onError: onError,
+      onMessage: (packet) {
+        try {
+          var data = jsonDecode(packet);
+          switch (data['packet_type']) {
+            case 'CONVERSATION_UPDATED':
+              updateConversationStats(data['payload']['conversation']);
+              break;
+            case 'AGENT_MESSAGE':
+            case 'BOT_MESSAGE':
+              if (data['payload'].containsKey('conversation') && data['payload']['conversation'] is String) {
                 var conversation = jsonDecode(data['payload']['conversation']);
                 updateConversationStats(conversation);
-                break;
-              case 'MESSAGE_READ':
-                if (data['payload']['conversationId'] is String) {
-                  stats.conversations = stats.conversations.map((c) {
-                    if (c.id == data['payload']['conversationId']) c.unread = 0;
-                    return c;
-                  }).toList();
-                  onStatsChange(stats);
-                }
-                break;
-              case 'CHATBOT_WIDGET_RESPONSE':
-                var message = jsonDecode(data['payload']['message']);
-                if (!message) return;
-
-                try {
-                  var conversation = stats.conversations
-                      .firstWhere((c) => c.id == message['conversationId']);
-                  conversation.unread++;
-                } catch (e) {
-                  stats.conversations.add(ConversationsStats(
-                      id: message['conversationId'], unread: 1, closed: false));
-                }
-
+              }
+              break;
+            case 'MESSAGE_READ':
+              if (data['payload']['conversationId'] is String) {
+                stats.conversations = stats.conversations.map((c) {
+                  if (c.id == data['payload']['conversationId']) c.unread = 0;
+                  return c;
+                }).toList();
                 onStatsChange(stats);
-                break;
-              case 'CONVERSATION_HIDDEN':
-                stats.conversations = stats.conversations
-                    .where((c) => c.id != data['payload']['conversationId'])
-                    .toList();
+              }
+              break;
+            case 'CHATBOT_WIDGET_RESPONSE':
+              var message = jsonDecode(data['payload']['message']);
+              if (!message) return;
+
+              try {
+                var conversation = stats.conversations.firstWhere((c) => c.id == message['conversationId']);
+                conversation.unread++;
+              } catch (e) {
+                stats.conversations.add(ConversationStats(id: message['conversationId'], unread: 1, closed: false));
+              }
+
+              onStatsChange(stats);
+              break;
+            case 'CONVERSATION_HIDDEN':
+              stats.conversations =
+                  stats.conversations.where((c) => c.id != data['payload']['conversationId']).toList();
+              onStatsChange(stats);
+              break;
+            case 'REFRESH_DATA':
+              if (data['payload'].containsKey('conversations') && data['payload']['conversations'] is List) {
+                List<dynamic> conversationsData = data['payload']['conversations'];
+                for (var conversation in conversationsData) {
+                  updateConversationStats(conversation);
+                }
                 onStatsChange(stats);
-                break;
-            }
-          } catch (error) {
-            onError?.call(error);
-            return;
+              }
+              break;
           }
-        });
-  }).catchError((error) {
-    onError?.call(error);
-  });
+        } catch (error) {
+          onError?.call(error);
+          return;
+        }
+      });
 
-  return () {
-    killed = true;
-    unsubscribe?.call();
-  };
+  return () => unsubscribe?.call();
 }
 
-ConversationsStats getConversationStats(dynamic conversation) {
+final _messageSide = {
+  'CUSTOMER': 1,
+  'AGENT': 2,
+  'BOT': 3,
+};
+
+ConversationStats getConversationStats(dynamic conversation) {
   List messages = conversation['messages'] ?? [];
   int unread = 0;
   for (var message in messages) {
     if (!message.containsKey('read')) continue;
     if (message['read'] == true) continue;
 
-    if (message['side'] == messageSide['BOT']) {
+    if (message['side'] == _messageSide['BOT']) {
       unread++;
-    } else if (message['side'] == messageSide['AGENT']) {
+    } else if (message['side'] == _messageSide['AGENT']) {
       unread++;
     }
   }
-  return ConversationsStats(
-      id: conversation['id'],
-      unread: unread,
-      closed: conversation['closed'] == true);
+  return ConversationStats(id: conversation['id'], unread: unread, closed: conversation['closed'] == true);
 }

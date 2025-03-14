@@ -24,11 +24,8 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
   @override
   void didUpdateWidget(AtlasSupportWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    var hasChanged = widget.userId != oldWidget.userId ||
-        widget.userHash != oldWidget.userHash ||
-        widget.name != oldWidget.name ||
-        widget.email != oldWidget.email ||
-        widget.phoneNumber != oldWidget.phoneNumber;
+    var hasChanged = widget.appId != oldWidget.appId ||widget.atlasId != oldWidget.atlasId ||
+        widget.query != oldWidget.query;
     if (hasChanged) {
       _loadPage(_controller);
     }
@@ -52,11 +49,6 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
       'appId': widget.appId,
       ...widget.query == null || widget.query == "" ? {} : {'query': widget.query!.replaceAll(RegExp(r'\s'), '')},
       ...widget.atlasId == null || widget.atlasId == "" ? {} : {'atlasId': widget.atlasId},
-      ...widget.userId == null || widget.userId == "" ? {} : {'userId': widget.userId},
-      ...widget.userHash == null || widget.userHash == "" ? {} : {'userHash': widget.userHash},
-      ...widget.name == null || widget.name == "" ? {} : {'userName': widget.name},
-      ...widget.email == null || widget.email == "" ? {} : {'userEmail': widget.email},
-      ...widget.phoneNumber == null || widget.phoneNumber == "" ? {} : {'userPhone': widget.phoneNumber},
     });
     controller.loadRequest(url);
   }
@@ -82,10 +74,10 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
         final message = (jsonDecode(package.message) as Map<String, dynamic>);
         if (message['type'] == 'atlas:error') {
           widget.onError?.call('AtlasSupportWidget: ${message['errorMessage']}');
-        } else if (message['type'] == 'atlas:chatStart') {
+        } else if (message['type'] == 'atlas:chatStarted') {
           widget.onChatStarted?.call({'ticketId': message['ticketId'], 'chatbotKey': message['chatbotKey']});
         } else if (message['type'] == 'atlas:newTicket') {
-          widget.onNewTicket?.call({'ticketId': message['ticketId']});
+          widget.onNewTicket?.call({'ticketId': message['ticketId'], 'chatbotKey': message['chatbotKey']});
         } else if (message['type'] == 'atlas:changeIdentity') {
           widget.onChangeIdentity?.call({'atlasId': message['atlasId']});
         }

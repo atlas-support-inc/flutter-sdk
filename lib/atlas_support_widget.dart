@@ -18,11 +18,6 @@ class AtlasSupportWidget extends StatefulWidget {
   final String appId;
   final String? query;
   final String? atlasId;
-  final String? userId;
-  final String? userHash;
-  final String? name;
-  final String? email;
-  final String? phoneNumber;
   final AtlasWidgetChatStartedHandler? onChatStarted;
   final AtlasWidgetNewTicketHandler? onNewTicket;
   final AtlasWidgetChangeIdentityHandler? onChangeIdentity;
@@ -33,11 +28,6 @@ class AtlasSupportWidget extends StatefulWidget {
       required this.appId,
       this.query,
       this.atlasId,
-      this.userId,
-      this.userHash,
-      this.name,
-      this.email,
-      this.phoneNumber,
       this.onChatStarted,
       this.onNewTicket,
       this.onChangeIdentity,
