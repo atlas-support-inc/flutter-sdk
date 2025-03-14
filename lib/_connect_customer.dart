@@ -2,11 +2,12 @@ import 'dart:convert';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import '_config.dart';
 
-Function connectCustomer(
-    {required String atlasId, required Function onMessage}) {
+Function connectCustomer({required String atlasId, required Function onMessage, Function? onError}) {
   bool killed = false;
   WebSocketChannel? channel;
   int reconnectDelay = 1000;
+
+  bool synced = false;
 
   void kill() {
     killed = true;
@@ -15,8 +16,7 @@ Function connectCustomer(
 
   void connect() {
     if (killed) return;
-    channel = WebSocketChannel.connect(
-        Uri.parse("$atlasWebSocketBaseUrl/ws/CUSTOMER::$atlasId"));
+    channel = WebSocketChannel.connect(Uri.parse("$atlasWebSocketBaseUrl/ws/CUSTOMER::$atlasId"));
 
     var ch = channel;
     if (ch == null) return;
@@ -24,7 +24,20 @@ Function connectCustomer(
     ch.stream.listen((message) {
       reconnectDelay = 1000;
       if (killed) return kill();
-      onMessage(message);
+      try {
+        onMessage(message);
+      } catch (error) {
+        onError?.call(error);
+      }
+      if (!synced) {
+        ch.sink.add(jsonEncode({
+          'channel_id': atlasId,
+          'channel_kind': 'CUSTOMER',
+          'packet_type': 'REFRESH_DATA',
+          'payload': {'entity': 'conversations'},
+        }));
+        synced = true;
+      }
     }, onDone: () {
       if (killed) return;
       channel = null;

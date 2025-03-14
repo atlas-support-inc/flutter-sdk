@@ -56,6 +56,7 @@ class DynamicAtlasSupportWidgetState extends State<DynamicAtlasSupportWidget> {
         email: _email,
         phoneNumber: _phoneNumber,
         onError: widget.onError,
+        onChatStarted: widget.onChatStarted,
         onNewTicket: widget.onNewTicket,
         onChangeIdentity: widget.onChangeIdentity,
         controller: widget.controller,

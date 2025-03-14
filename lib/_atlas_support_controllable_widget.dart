@@ -21,6 +21,7 @@ class AtlasSupportControllableWidget extends AtlasSupportWidget {
     String? email,
     String? phoneNumber,
     AtlasWidgetErrorHandler? onError,
+    AtlasWidgetChatStartedHandler? onChatStarted,
     AtlasWidgetNewTicketHandler? onNewTicket,
     AtlasWidgetNewTicketHandler? onChangeIdentity,
     this.controller,
@@ -36,6 +37,7 @@ class AtlasSupportControllableWidget extends AtlasSupportWidget {
             email: email,
             phoneNumber: phoneNumber,
             onError: onError,
+            onChatStarted: onChatStarted,
             onNewTicket: onNewTicket,
             onChangeIdentity: onChangeIdentity);
 

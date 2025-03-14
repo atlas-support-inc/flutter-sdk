@@ -10,18 +10,25 @@ var secondUser = userEmpty;
 var currentUser = secondUser;
 
 var appId = 'w51lhvyut7';
-var userId = 'adam';
+
+class DemoUser {
+  final String userId;
+  final String atlasId;
+  DemoUser(this.userId, this.atlasId);
+}
+
+var userAdam = DemoUser('adam', '86427437-8d4e-425c-bae1-109cf7ecbfc5');
+var userSara = DemoUser('sara', '4ae4ee1b-5925-4059-9932-16cdf60d5ba9');
 
 void main() {
   runApp(const MyApp());
+
   AtlasSDK.setAppId(appId);
-  AtlasSDK.identify(userId: 'adam', name: 'Adam Smith', email: 'adam@smith.co', phoneNumber: '+1098765432');
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -46,19 +53,12 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _unreadCount = 0;
-  Function? _unsubscribe;
+  Function? _dispose;
   AtlasSupportSDK sdk = createAtlasSupportSDK(
     appId: appId,
-    userId: currentUser['id'],
-    userHash: currentUser['hash'],
-    name: 'Jon',
-    email: 'jon@atlas.so',
-    phoneNumber: '1234567890',
-    onError: (error) => print("onError($error)"),
-    onNewTicket: (data) => print("onNewTicket($data)"),
-    onChangeIdentity: (identity) => print("onChangeIdentity($identity)"),
   );
 
+  final TextEditingController _userIdController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
@@ -66,16 +66,51 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    _unsubscribe = sdk.watchStats((stats) {
+
+    // Log all Atlas errors
+
+    var disposeErrorHandler = AtlasSDK.onError((error) {
+      print("onError(${error.message}${error.original != null ? ', ${error.original}' : ''})");
+    });
+
+    // Track identity changes
+
+    var atlasId = AtlasSDK.getAtlasId();
+    if (atlasId != null) _userIdController.text = atlasId;
+
+    var disposeChangeIdentityHandler = AtlasSDK.onChangeIdentity((identity) {
+      if (identity == null) {
+        _userIdController.text = '';
+        print("onChangeIdentity(null)");
+      } else {
+        _userIdController.text = identity.atlasId == userAdam.atlasId ? userAdam.userId : identity.atlasId == userSara.atlasId ? userSara.userId : '';
+        print("onChangeIdentity({atlasId: ${identity.atlasId}})");
+      }
+    });
+
+    // Track conversations stats
+
+    var disposeStatsHandler = AtlasSDK.watchStats((stats) {
       setState(() {
         _unreadCount = stats.conversations.fold(0, (sum, conversation) => sum + conversation.unread);
       });
     });
+
+    // Watch for new conversations
+
+    // var disposeChatStartedHandler = AtlasSDK.onChatStarted((ticket) => print("onChatStarted($ticket)"));
+
+    _dispose = () {
+      disposeErrorHandler();
+      disposeChangeIdentityHandler();
+      disposeStatsHandler();
+      // disposeChatStartedHandler();
+    };
   }
 
   @override
   void dispose() {
-    _unsubscribe?.call();
+    _dispose?.call();
     super.dispose();
   }
 
@@ -98,24 +133,18 @@ class _MyHomePageState extends State<MyHomePage> {
                         context: context,
                         isScrollControlled: true,
                         enableDrag: false,
+                        showDragHandle: true,
                         builder: (BuildContext context) {
-                          return Container(
-                            // decoration: BoxDecoration(
-                            //   color: Theme.of(context).scaffoldBackgroundColor,
-                            //   borderRadius: const BorderRadius.only(
-                            //     topLeft: Radius.circular(20.0),
-                            //     topRight: Radius.circular(20.0),
-                            //   ),
-                            // ),
-                            height: MediaQuery.of(context).size.height * 0.86, // Adjusted height
+                          return SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.82, // Adjusted height
                             child: SafeArea(
                               child: Scaffold(
                                 body: AtlasSDK.Widget(
-                                  // persist: "main",
-                                  // query: "chatbotKey: embed_test",
-                                  // onNewTicket: (data) {
-                                  //   sdk.updateCustomFields(data['ticketId'], {'test': 'flutter-sourced'});
-                                  // },
+                                  // query: "chatbotKey: order",
+                                  // persist: "global",
+                                  onChatStarted: (data) {
+                                    // sdk.updateCustomFields(data['ticketId'], {'test': 'flutter-sourced'});
+                                  },
                                 ),
                               ),
                             ),
@@ -148,6 +177,27 @@ class _MyHomePageState extends State<MyHomePage> {
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 children: <Widget>[
+                  RadioListTile(
+                    title: Text('User ID: "${userAdam.userId}"'),
+                    value: userAdam.userId,
+                    groupValue: _userIdController.text,
+                    onChanged: (value) {
+                      setState(() {
+                        _userIdController.text = value as String;
+                      });
+                    },
+                  ),
+                  RadioListTile(
+                    title: Text('User ID: "${userSara.userId}"'),
+                    value: userSara.userId,
+                    groupValue: _userIdController.text,
+                    onChanged: (value) {
+                      setState(() {
+                        _userIdController.text = value as String;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 10),
                   TextField(
                     decoration: const InputDecoration(
                       labelText: 'Name',
@@ -174,6 +224,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   const SizedBox(height: 10),
                   ElevatedButton(
                     onPressed: () {
+                      final userId = _userIdController.text;
                       final name = _nameController.text;
                       final email = _emailController.text;
                       final phoneNumber = _phoneNumberController.text;
@@ -184,7 +235,12 @@ class _MyHomePageState extends State<MyHomePage> {
                         phoneNumber: phoneNumber.trim() != "" ? phoneNumber : null,
                       );
                     },
-                    child: const Text('Update'),
+                    child: const Text('Identify'),
+                  ),
+                  const SizedBox(height: 10),
+                  const ElevatedButton(
+                    onPressed: AtlasSDK.logout,
+                    child: Text('Logout'),
                   ),
                 ],
               ),

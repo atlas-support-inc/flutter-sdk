@@ -111,7 +111,8 @@ Function watchAtlasSupportStats(
                 onStatsChange(stats);
                 break;
             }
-          } catch (e) {
+          } catch (error) {
+            onError?.call(error);
             return;
           }
         });

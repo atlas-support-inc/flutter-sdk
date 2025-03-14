@@ -3,6 +3,9 @@ library atlas_support_sdk;
 import 'package:flutter/material.dart';
 import 'atlas_support_widget_state.dart';
 
+typedef AtlasWidgetChatStartedHandler = void Function(
+    Map<String, dynamic> ticket); // {String ticketId, String? chatbotKey}
+
 typedef AtlasWidgetNewTicketHandler = void Function(
     Map<String, dynamic> ticket); // {String ticketId}
 
@@ -20,6 +23,7 @@ class AtlasSupportWidget extends StatefulWidget {
   final String? name;
   final String? email;
   final String? phoneNumber;
+  final AtlasWidgetChatStartedHandler? onChatStarted;
   final AtlasWidgetNewTicketHandler? onNewTicket;
   final AtlasWidgetChangeIdentityHandler? onChangeIdentity;
   final AtlasWidgetErrorHandler? onError;
@@ -34,6 +38,7 @@ class AtlasSupportWidget extends StatefulWidget {
       this.name,
       this.email,
       this.phoneNumber,
+      this.onChatStarted,
       this.onNewTicket,
       this.onChangeIdentity,
       this.onError})

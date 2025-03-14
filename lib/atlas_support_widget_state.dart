@@ -36,6 +36,8 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
 
   @override
   void dispose() {
+    _controller.clearCache();
+    _controller.setJavaScriptMode(JavaScriptMode.disabled);
     super.dispose();
   }
 
@@ -80,6 +82,8 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
         final message = (jsonDecode(package.message) as Map<String, dynamic>);
         if (message['type'] == 'atlas:error') {
           widget.onError?.call('AtlasSupportWidget: ${message['errorMessage']}');
+        } else if (message['type'] == 'atlas:chatStart') {
+          widget.onChatStarted?.call({'ticketId': message['ticketId'], 'chatbotKey': message['chatbotKey']});
         } else if (message['type'] == 'atlas:newTicket') {
           widget.onNewTicket?.call({'ticketId': message['ticketId']});
         } else if (message['type'] == 'atlas:changeIdentity') {

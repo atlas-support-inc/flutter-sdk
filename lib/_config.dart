@@ -1,7 +1,6 @@
-// const atlasWebSocketBaseUrl = 'wss://app.atlas.so';
-// const atlasApiBaseUrl = 'https://app.atlas.so/api';
-// const atlasWidgetBaseUrl = 'https://embed.atlas.so';
+// For development you can specify different values:
+// flutter run --dart-define=ATLAS_API_URL=http://localhost:8080/api --dart-define=ATLAS_WS_URL=ws://localhost:8080 --dart-define=ATLAS_EMBED_URL=http://localhost:1234
 
-const atlasWebSocketBaseUrl = 'ws://localhost:8080';
-const atlasApiBaseUrl = 'http://localhost:8080/api';
-const atlasWidgetBaseUrl = 'http://localhost:1234';
+const atlasWebSocketBaseUrl = String.fromEnvironment('ATLAS_WS_URL', defaultValue: 'wss://app.atlas.so');
+const atlasApiBaseUrl = String.fromEnvironment('ATLAS_API_URL', defaultValue: 'https://app.atlas.so/api');
+const atlasWidgetBaseUrl = String.fromEnvironment('ATLAS_EMBED_URL', defaultValue: 'https://embed.atlas.so');
