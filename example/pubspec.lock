@@ -15,7 +15,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "2.0.0-beta.1"
+    version: "2.0.0-beta.3"
   badges:
     dependency: "direct main"
     description:

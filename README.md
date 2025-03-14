@@ -1,163 +1,143 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# Atlas Support SDK for Flutter
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/guides/libraries/writing-package-pages).
+A Flutter SDK that integrates a real-time chat widget into Flutter applications.
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-library-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/developing-packages).
--->
+## Installation
 
-Atlas customer support chat widget for Flutter
+Add Atlas Support SDK to your Flutter project by adding the following dependency to your `pubspec.yaml`:
 
-## Getting started
-
-To use it with Android you may need to ensure that _AndroidManifest.xml_ includes `<uses-permission android:name="android.permission.INTERNET" />`
-
-## Usage
-
-You can run [sample application](https://github.com/atlas-support-inc/flutter-sdk/blob/master/example) by changing credentials in the [main.dart](https://github.com/atlas-support-inc/flutter-sdk/blob/master/example/lib/main.dart) file.
-
-### Using the widget to add the chat
-
-```dart
-import 'package:atlas_support_sdk/atlas_support_widget.dart';
-
-// Use widget:
-AtlasSupportWidget(appId: "...", userId: "...", userHash: "...", onError: print)
+```yaml
+dependencies:
+  atlas_support_sdk: ^2.0.0-beta.2
 ```
 
-### Listening for stats changes
+## Setup
 
-Each conversation stat instance contains `id`, `unread` (amount of unread messages), and `closed` flag.
-
-```dart
-import 'package:atlas_support_sdk/watch_atlas_support_stats.dart';
-
-// Listen:
-class _MyWidgetState extends State<MyWidget> {
-  int _unreadCount = 0;
-  Function? _unsubscribe = null;
-
-  @override
-  void initState() {
-    super.initState();
-    _unsubscribe = watchAtlasSupportStats(
-        appId: "...",
-        userId: "...",
-        userHash: "...",
-        onStatsChange: (stats) {
-          setState(() {
-            _unreadCount = stats.conversations
-                .fold(0, (sum, conversation) => sum + conversation.closed ? 0 : conversation.unread);
-          });
-        },
-        onError: print);
-  }
-
-  @override
-  void dispose() {
-    _unsubscribe?.call();
-    super.dispose();
-  }
-
-  // ...
-}
-```
-
-### Updating user custom fields
-
-```dart
-import 'package:atlas_support_sdk/update_atlas_custom_fields.dart';
-
-AtlasSupportWidget(
-  appId: "...",
-  onNewTicket: (data) {
-    updateAtlasCustomFields(
-      "...", // atlasId
-      data["ticketId"], // ticketId
-      {"prop": "value"}, // customFields
-      // If needed:
-      userHash: "...",
-    );
-  },
-);
-```
-
-### Using instance with shared settings
-
-Using SDK instance you can change user for all widgets and watches by calling `sdk.identify(userId: "...", userHash: "...")`.
+Import the package into your code:
 
 ```dart
 import 'package:atlas_support_sdk/atlas_support_sdk.dart';
-
-// Listen:
-class _MyWidgetState extends State<MyWidget> {
-  int _unreadCount = 0;
-  Function? _unsubscribe = null;
-  AtlasSupportSDK atlasSdk = createAtlasSupportSDK(appId: "...", userId: "...", userHash: "...", onError: print);
-
-  @override
-  void initState() {
-    super.initState();
-    _unsubscribe = atlasSdk.watchStats((stats) {
-      setState(() {
-        _unreadCount = stats.conversations
-            .fold(0, (sum, conversation) => sum + conversation.closed ? 0 : conversation.unread);
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _unsubscribe?.call();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: atlasSdk.Widget(
-        onNewTicket: (data) {
-          atlasSdk.updateCustomFields(
-            data["ticketId"], // ticketId
-            {"prop": "value"}, // customFields
-          );
-        },
-      )
-    );
-  }
-
-  // ...
-}
 ```
 
-When using the widget via SDK instance you can also persist its state to prevent loading Atlas more than once.
-Use `persist` property with the unique string value at any place and after the initial load the app will render immediately:
+Connect the SDK to your account (you can find your App ID in the [Atlas company settings](https://app.atlas.so/settings/company)):
 
 ```dart
-sdk.Widget(persist: "main")
+AtlasSDK.setAppId("YOUR_APP_ID");
 ```
 
-### Widget `query` parameter
+**ℹ️ It's crucial to execute this code at the app's launch, as SDK functionality will be unavailable otherwise.**
 
-An optional `query` parameter in string format. The `query` is used to configure the behavior or content of the embeded chat widget.
+## Identify your users
+
+Make the following call with user details wherever a user logs into your application:
 
 ```dart
-// Initiate widget and immediately start chatbot with report_bug key (chatbotKey: report_bug), or open the last one if exists (prefer: last)
-AtlasSupportWidget(appId: "...", query: "chatbotKey: report_bug; prefer: last")
-// or
-atlasSdk.Widget(query: "chatbotKey: report_bug; prefer: last")
-
-// Initiate widget and immediately open helpcenter
-atlasSdk.Widget(query: "open: helpcenter")
+AtlasSDK.identify(
+  userId: "user123",
+  userHash: null, // Optional security hash
+  name: "John Doe",
+  email: "john@example.com",
+  phoneNumber: "+1234567890"
+);
 ```
 
-`chatbotKey: key`: (optional) Specifies the chatbot that has to be started immediately when AtlasFragment is loaded
+To make sure scammers can't spoof a user, you should pass a `userHash` into the identify call. You can find how to enable `userHash` validation in the [User Authentication](https://help.atlas.so/articles/620722-user-authentication) article.
 
-`prefer: last`: (optional) Instead of starting new chatbot everytime it will open the last not completed chatbot if exists
+Optional parameters like `name`, `email`, or `phoneNumber` should be set to null (not empty string) if they're unknown, so they won't override previously stored values.
 
-`open: helpcenter` Starts widget with HelpCenter screen
+When you want to update the user's details, you can call `identify` method again.
+
+To clear the user's session when they log out of your application, use:
+
+```dart
+AtlasSDK.logout();
+```
+
+## Atlas Widget
+
+### Basic Implementation
+
+To display the Atlas chat widget in your Flutter app:
+
+```dart
+AtlasSDK.Widget();
+```
+
+### Configuring the Widget
+
+You can configure how Atlas UI looks through the [Chat Configuration page](https://app.atlas.so/configuration/chat). You can also configure the behavior using query parameters:
+
+```dart
+// Initialize chat with help center opened
+AtlasSDK.Widget(query: "open: helpcenter")
+
+// Initialize chat with a specific chatbot
+AtlasSDK.Widget(query: "chatbotKey: report_bug")
+
+// Initialize chat with last opened chatbot if exists
+AtlasSDK.Widget(query: "chatbotKey: report_bug; prefer: last")
+```
+
+### Persistent Chat Sessions
+
+To maintain chat state across widget rebuilds, use the `persist` parameter:
+
+```dart
+AtlasSDK.Widget(
+  persist: "order_instance",
+  query: "chatbotKey: order",
+)
+```
+
+## Event Handling
+
+The SDK provides several event handlers to monitor chat activities:
+
+```dart
+// Handle errors
+AtlasSDK.onError((error) {
+  print("Error: ${error.message}");
+});
+
+// Track new chat sessions
+AtlasSDK.onChatStarted((chatStarted) {
+  print("Chat started: ${chatStarted.ticketId}");
+});
+
+// Monitor new tickets
+AtlasSDK.onNewTicket((newTicket) {
+  print("New ticket: ${newTicket.ticketId}");
+});
+
+// Watch for identity changes
+AtlasSDK.onChangeIdentity((identity) {
+  if (identity == null) {
+    print("User logged out");
+  } else {
+    print("User identified: ${identity.atlasId}");
+  }
+});
+
+// Track conversation statistics
+AtlasSDK.watchStats((stats) {
+  var unreadCount = stats.conversations.fold(0, (sum, conversation) => sum + conversation.unread);
+  print("Unread conversations: ${unreadCount}");
+});
+```
+
+Each event handler returns a dispose function that can be called to remove the listener.
+
+## Requirements
+
+- Flutter 2.0.0 or later
+- Dart 2.12.0 or later
+
+## Support
+
+For issues or feature requests, contact the engineering team at [engineering@getatlas.io](mailto:engineering@getatlas.io) or visit our [GitHub Issues](https://github.com/atlas-support-inc/flutter-sdk/issues) page.
+
+For more details, visit the official [Atlas Support website](https://atlas.so).
+
+## Author
+
+Atlas Support Inc, engineering@atlas.so
