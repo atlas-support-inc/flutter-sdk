@@ -8,7 +8,7 @@ Add Atlas Support SDK to your Flutter project by adding the following dependency
 
 ```yaml
 dependencies:
-  atlas_support_sdk: ^2.0.0-beta.2
+  atlas_support_sdk: ^2.0.0
 ```
 
 ## Setup
@@ -100,17 +100,22 @@ The SDK provides several event handlers to monitor chat activities:
 ```dart
 // Handle errors
 AtlasSDK.onError((error) {
-  print("Error: ${error.message}");
+  print(error.message);
+  if (error.original != null) print(error.original);
 });
 
 // Track new chat sessions
 AtlasSDK.onChatStarted((chatStarted) {
-  print("Chat started: ${chatStarted.ticketId}");
+  var message = "💬 New chat: ${chatStarted.ticketId}"
+  if (chatStarted.chatbotKey != null) message += " (🤖 via chatbot ${chatStarted.chatbotKey})"; 
+  print(message);
 });
 
 // Monitor new tickets
 AtlasSDK.onNewTicket((newTicket) {
-  print("New ticket: ${newTicket.ticketId}");
+  var message = "🎫 New ticket: ${newTicket.ticketId}"; 
+  if (chatStarted.chatbotKey != null) message += " (🤖 via chatbot ${chatStarted.chatbotKey})"; 
+  print(message);
 });
 
 // Watch for identity changes
