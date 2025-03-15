@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '_config.dart';
 
-const loginUrl = "$atlasApiBaseUrl/client-app/company/identify";
+const _loginUrl = "$atlasApiBaseUrl/client-app/company/identify";
+
+typedef AtlasCustomFields = Map<String, dynamic>;
 
 Future login(
     {required String appId,
@@ -10,8 +12,9 @@ Future login(
     String? userHash,
     String? name,
     String? email,
-    String? phoneNumber}) {
-  var uri = Uri.parse(loginUrl);
+    String? phoneNumber,
+    AtlasCustomFields? customFields}) {
+  var uri = Uri.parse(_loginUrl);
 
   return http
       .post(uri,
@@ -23,6 +26,7 @@ Future login(
             ...(name == null ? {} : {'name': name}),
             ...(email == null ? {} : {'email': email}),
             ...(phoneNumber == null ? {} : {'phoneNumber': phoneNumber}),
+            ...(customFields == null ? {} : {'customFields': customFields}),
           }))
       .then(
     (response) {

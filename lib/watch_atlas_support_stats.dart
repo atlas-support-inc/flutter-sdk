@@ -75,7 +75,7 @@ Function watchAtlasSupportStats(
               break;
             case 'CHATBOT_WIDGET_RESPONSE':
               var message = jsonDecode(data['payload']['message']);
-              if (!message) return;
+              if (message == null || message is! Map) return;
 
               try {
                 var conversation = stats.conversations.firstWhere((c) => c.id == message['conversationId']);

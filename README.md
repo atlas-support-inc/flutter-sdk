@@ -37,7 +37,11 @@ AtlasSDK.identify(
   userHash: null, // Optional security hash
   name: "John Doe",
   email: "john@example.com",
-  phoneNumber: "+1234567890"
+  phoneNumber: "+1234567890",
+  customFields: {
+    "title": "senior",
+    "level": 8,
+  }
 );
 ```
 

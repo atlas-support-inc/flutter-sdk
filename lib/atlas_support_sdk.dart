@@ -10,13 +10,18 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:atlas_support_sdk/_dynamic_atlas_support_widget.dart';
 import 'package:atlas_support_sdk/update_atlas_custom_fields.dart';
 
+void _log(dynamic message) {
+  // ignore: avoid_print
+  print(message);
+}
+
 class AtlasError {
   final String message;
   final dynamic original;
   AtlasError(this.message, [this.original]);
 }
 
-typedef AtlasNewErrorHandler = void Function(AtlasError error);
+typedef AtlasErrorHandler = void Function(AtlasError error);
 
 class AtlasChatStarted {
   final String ticketId;
@@ -32,7 +37,6 @@ class AtlasNewTicket {
   AtlasNewTicket(this.ticketId, this.chatbotKey);
 }
 
-
 typedef AtlasNewTicketHandler = void Function(AtlasNewTicket ticket);
 
 class AtlasChangeIdentity {
@@ -40,31 +44,31 @@ class AtlasChangeIdentity {
   AtlasChangeIdentity(this.atlasId);
 }
 
-typedef AtlasNewChangeIdentityHandler = void Function(AtlasChangeIdentity? identity);
+typedef AtlasChangeIdentityHandler = void Function(AtlasChangeIdentity? identity);
 
-String storageAtlasId(String appId) => '@atlas.so/$appId/atlasId';
+String _storageAtlasId(String appId) => '@atlas.so/$appId/atlasId';
 
 class AtlasSDK {
   static String? _appId;
   static String? _atlasId;
 
-  static final List<AtlasNewErrorHandler> _errorHandlers = [];
+  static final List<AtlasErrorHandler> _errorHandlers = [];
   static final List<AtlasChatStartedHandler> _chatStartedHandlers = [];
   static final List<AtlasNewTicketHandler> _newTicketHandlers = [];
-  static final List<AtlasNewChangeIdentityHandler> _changeIdentityHandlers = [];
+  static final List<AtlasChangeIdentityHandler> _changeIdentityHandlers = [];
 
   static final Map<String, WebViewController> _controllers = {};
 
   static String? getAtlasId() => _atlasId;
 
-  static _triggerErrorHandlers(AtlasError error, [AtlasNewErrorHandler? customHandler]) {
+  static _triggerErrorHandlers(AtlasError error, [AtlasErrorHandler? customHandler]) {
     var handlers = customHandler != null ? [customHandler, ..._errorHandlers] : _errorHandlers;
     for (var handler in handlers) {
       try {
         handler(error);
       } catch (e) {
-        print("AtlasSupportSDK: Error in error handler");
-        print(e);
+        _log("AtlasSupportSDK: Error in error handler");
+        _log(e);
       }
     }
   }
@@ -92,7 +96,7 @@ class AtlasSDK {
   }
 
   static _triggerChangeIdentityHandlers(AtlasChangeIdentity? changeIdentity,
-      [AtlasNewChangeIdentityHandler? customHandler]) {
+      [AtlasChangeIdentityHandler? customHandler]) {
     _controllers.clear();
     var handlers = customHandler != null ? [customHandler, ..._changeIdentityHandlers] : _changeIdentityHandlers;
     for (var handler in handlers) {
@@ -112,7 +116,7 @@ class AtlasSDK {
 
     try {
       final preferences = await SharedPreferences.getInstance();
-      String? atlasId = preferences.getString(storageAtlasId(appId));
+      String? atlasId = preferences.getString(_storageAtlasId(appId));
 
       // If user was authenticated while settings were loading, we assume that SDK was already reloaded
       if (_atlasId == null) {
@@ -127,7 +131,7 @@ class AtlasSDK {
     }
   }
 
-  static Future<void> _setAtlasId(String atlasId, AtlasNewChangeIdentityHandler? onChange) async {
+  static Future<void> _setAtlasId(String atlasId, AtlasChangeIdentityHandler? onChange) async {
     var appId = _appId;
     if (appId == null || appId == "") {
       var errorMessage = "AtlasSupportSDK: Cannot change Atlas ID without App ID set";
@@ -138,7 +142,7 @@ class AtlasSDK {
     if (_atlasId == atlasId) return;
 
     final SharedPreferences preferences = await SharedPreferences.getInstance();
-    preferences.setString(storageAtlasId(appId), atlasId);
+    preferences.setString(_storageAtlasId(appId), atlasId);
     _atlasId = atlasId;
 
     _triggerChangeIdentityHandlers(AtlasChangeIdentity(atlasId), onChange);
@@ -155,8 +159,9 @@ class AtlasSDK {
       String? name,
       String? email,
       String? phoneNumber,
-      AtlasNewChangeIdentityHandler? onChange,
-      AtlasNewErrorHandler? onError}) async {
+      AtlasCustomFields? customFields,
+      AtlasChangeIdentityHandler? onChange,
+      AtlasErrorHandler? onError}) async {
     var appId = _appId;
     if (appId == null || appId == "") {
       var errorMessage = "AtlasSupportSDK: Cannot call identify() without App ID set";
@@ -164,7 +169,14 @@ class AtlasSDK {
       throw Exception(errorMessage);
     }
 
-    return login(appId: appId, userId: userId, userHash: userHash, name: name, email: email, phoneNumber: phoneNumber)
+    return login(
+            appId: appId,
+            userId: userId,
+            userHash: userHash,
+            name: name,
+            email: email,
+            phoneNumber: phoneNumber,
+            customFields: customFields)
         .then((customer) async {
       var atlasId = customer['id'];
       if (_atlasId == atlasId) return;
@@ -183,7 +195,8 @@ class AtlasSDK {
     });
   }
 
-  Future<void> updateCustomFields(String ticketId, Map<String, dynamic> customFields) async {
+  // ignore: unused_element
+  Future<void> _updateCustomFields(String ticketId, Map<String, dynamic> customFields) async {
     var appId = _appId;
     if (appId == null || appId == "") {
       var errorMessage = "AtlasSupportSDK: Cannot call updateCustomFields() without App ID set";
@@ -198,7 +211,7 @@ class AtlasSDK {
       throw Exception(errorMessage);
     }
 
-    // TODO: ❗ Requires userHash
+    // TODO: ❗ Requires userHash that we are missing
     await updateAtlasCustomFields(atlasId, ticketId, customFields);
   }
 
@@ -217,7 +230,7 @@ class AtlasSDK {
 
     void subscribe(String atlasId) {
       Function? unsubscribe;
-      
+
       dispose?.call();
       dispose = () {
         dispose = null;
@@ -230,7 +243,6 @@ class AtlasSDK {
           onStatsChange: callback,
           onError: (error) =>
               _triggerErrorHandlers(AtlasError("AtlasSupportSDK: WebSocket thrown an error", error), onError));
-
     }
 
     if (atlasId != null) subscribe(atlasId);
@@ -250,10 +262,10 @@ class AtlasSDK {
   static Widget(
       {String? query,
       String? persist,
-      AtlasNewErrorHandler? onError,
+      AtlasErrorHandler? onError,
       AtlasChatStartedHandler? onChatStarted,
       AtlasNewTicketHandler? onNewTicket,
-      AtlasNewChangeIdentityHandler? onChangeIdentity}) {
+      AtlasChangeIdentityHandler? onChangeIdentity}) {
     var appId = _appId;
     if (appId == null || appId == "") {
       var errorMessage = "AtlasSupportSDK: Cannot render Widget() without App ID set";
@@ -316,12 +328,11 @@ class AtlasSDK {
     );
   }
 
-  static onError(AtlasNewErrorHandler onError) {
+  static onError(AtlasErrorHandler onError) {
     _errorHandlers.add(onError);
     return () => _errorHandlers.remove(onError);
   }
 
-  // TODO: It seems that embed doesn't send the message when chat is started with chatbot
   static onChatStarted(AtlasChatStartedHandler onChatStarted) {
     _chatStartedHandlers.add(onChatStarted);
     return () => _chatStartedHandlers.remove(onChatStarted);
@@ -332,7 +343,7 @@ class AtlasSDK {
     return () => _newTicketHandlers.remove(onNewTicket);
   }
 
-  static onChangeIdentity(AtlasNewChangeIdentityHandler onChangeIdentity) {
+  static onChangeIdentity(AtlasChangeIdentityHandler onChangeIdentity) {
     _changeIdentityHandlers.add(onChangeIdentity);
     return () => _changeIdentityHandlers.remove(onChangeIdentity);
   }

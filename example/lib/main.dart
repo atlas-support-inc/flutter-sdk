@@ -54,6 +54,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
+  final TextEditingController _titleController = TextEditingController();
 
   @override
   void initState() {
@@ -138,11 +139,8 @@ class _MyHomePageState extends State<MyHomePage> {
                             child: SafeArea(
                               child: Scaffold(
                                 body: AtlasSDK.Widget(
-                                  query: "chatbotKey: order",
-                                  // persist: "global",
-                                  onChatStarted: (data) {
-                                    // AtlasSDK.updateCustomFields(data['ticketId'], {'test': 'flutter-sourced'});
-                                  },
+                                  persist: "global",
+                                  // query: "chatbotKey: order",
                                 ),
                               ),
                             ),
@@ -220,17 +218,27 @@ class _MyHomePageState extends State<MyHomePage> {
                     controller: _phoneNumberController,
                   ),
                   const SizedBox(height: 10),
+                  TextField(
+                    decoration: const InputDecoration(
+                      labelText: 'Title',
+                      border: OutlineInputBorder(),
+                    ),
+                    controller: _titleController,
+                  ),
+                  const SizedBox(height: 10),
                   ElevatedButton(
                     onPressed: () {
                       final userId = _userIdController.text;
                       final name = _nameController.text;
                       final email = _emailController.text;
                       final phoneNumber = _phoneNumberController.text;
+                      final title = _titleController.text;
                       AtlasSDK.identify(
                         userId: userId,
                         name: name.trim() != "" ? name : null,
                         email: email.trim() != "" ? email : null,
                         phoneNumber: phoneNumber.trim() != "" ? phoneNumber : null,
+                        customFields: title.trim() != "" ? {'title': title} : null,
                       );
                     },
                     child: const Text('Identify'),
