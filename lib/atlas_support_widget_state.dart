@@ -24,7 +24,9 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
   @override
   void didUpdateWidget(AtlasSupportWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    var hasChanged = widget.appId != oldWidget.appId ||widget.atlasId != oldWidget.atlasId ||
+    var hasChanged = widget.appId != oldWidget.appId ||
+        widget.userId != oldWidget.userId ||
+        widget.userHash != oldWidget.userHash ||
         widget.query != oldWidget.query;
     if (hasChanged) {
       _loadPage(_controller);
@@ -48,9 +50,9 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
       'sdkVersion': 'flutter@${await getPackageVersion()}',
       'appId': widget.appId,
       ...widget.query == null || widget.query == "" ? {} : {'query': widget.query!.replaceAll(RegExp(r'\s'), '')},
-      ...widget.atlasId == null || widget.atlasId == "" ? {} : {'atlasId': widget.atlasId},
+      ...widget.userId == null || widget.userId == "" ? {} : {'userId': widget.userId},
+      ...widget.userHash == null || widget.userHash == "" ? {} : {'userHash': widget.userHash},
     });
-    print("Loading page with URL: $url");
     controller.loadRequest(url);
   }
 

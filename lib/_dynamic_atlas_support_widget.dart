@@ -8,7 +8,8 @@ import 'atlas_support_widget.dart';
 class DynamicAtlasSupportWidget extends StatefulWidget {
   final String appId;
   final String? query;
-  final String? initialAtlasId;
+  final String? initialUserId;
+  final String? initialUserHash;
   final Function registerIdentityChangeListener;
   final AtlasWidgetErrorHandler? onError;
   final AtlasWidgetChatStartedHandler? onChatStarted;
@@ -21,7 +22,8 @@ class DynamicAtlasSupportWidget extends StatefulWidget {
       {Key? key,
       required this.appId,
       this.query,
-      this.initialAtlasId,
+      this.initialUserId,
+      this.initialUserHash,
       this.onError,
       this.onChatStarted,
       this.onNewTicket,

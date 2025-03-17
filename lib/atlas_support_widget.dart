@@ -17,7 +17,8 @@ typedef AtlasWidgetErrorHandler = void Function(dynamic message);
 class AtlasSupportWidget extends StatefulWidget {
   final String appId;
   final String? query;
-  final String? atlasId;
+  final String? userId;
+  final String? userHash;
   final AtlasWidgetChatStartedHandler? onChatStarted;
   final AtlasWidgetNewTicketHandler? onNewTicket;
   final AtlasWidgetChangeIdentityHandler? onChangeIdentity;
@@ -27,7 +28,8 @@ class AtlasSupportWidget extends StatefulWidget {
       {Key? key,
       required this.appId,
       this.query,
-      this.atlasId,
+      this.userId,
+      this.userHash,
       this.onChatStarted,
       this.onNewTicket,
       this.onChangeIdentity,

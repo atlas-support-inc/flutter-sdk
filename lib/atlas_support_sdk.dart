@@ -299,8 +299,9 @@ class AtlasSDK {
       throw Exception(errorMessage);
     }
 
-    var atlasId = _atlasId;
-    if (atlasId == null) {
+    // Get and validate userId from last identified user data
+    var userIdValue = _lastIdentifiedUser?['userId'];
+    if (userIdValue == null || userIdValue is! String) {
       var errorMessage = "AtlasSupportSDK: Cannot call updateCustomFields() while not authenticated";
       _triggerErrorHandlers(AtlasError(errorMessage));
       throw Exception(errorMessage);
@@ -325,7 +326,7 @@ class AtlasSDK {
       }
       userHash = userHashValue;
     }
-    await updateAtlasCustomFields(atlasId, ticketId, customFields, userHash: userHash);
+    await updateAtlasCustomFields(userIdValue, ticketId, customFields, userHash: userHash);
   }
 
   static watchStats(AtlasWatcherStatsChangeHandler callback, [AtlasWatcherErrorHandler? onError]) {
@@ -386,10 +387,19 @@ class AtlasSDK {
       throw Exception(errorMessage);
     }
 
+    // Get userId and userHash from last identified user data
+    String? userId;
+    String? userHash;
+    if (_lastIdentifiedUser != null) {
+      userId = _lastIdentifiedUser!['userId'] as String?;
+      userHash = _lastIdentifiedUser!['userHash'] as String?;
+    }
+
     return DynamicAtlasSupportWidget(
       appId: appId,
       query: query,
-      initialAtlasId: _atlasId,
+      initialUserId: userId,
+      initialUserHash: userHash,
       onError: (error) {
         _triggerErrorHandlers(AtlasError("AtlasSupportSDK: Widget reported error", error), onError);
       },
