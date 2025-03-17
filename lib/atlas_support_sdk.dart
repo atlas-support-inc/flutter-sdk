@@ -2,6 +2,7 @@
 // The following _TypeError was thrown during a platform message callback:
 // Null check operator used on a null value
 
+import 'dart:convert';
 import 'package:atlas_support_sdk/_login.dart';
 import 'package:atlas_support_sdk/watch_atlas_support_stats.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -48,10 +49,44 @@ class AtlasChangeIdentity {
 typedef AtlasChangeIdentityHandler = void Function(AtlasChangeIdentity? identity);
 
 String _storageAtlasId(String appId) => '@atlas.so/$appId/atlasId';
+String _storageUserData(String appId) => '@atlas.so/$appId/userData';
+
+bool _areMapsEqual(dynamic map1, dynamic map2) {
+  if (map1 == null && map2 == null) return true;
+  if (map1 == null || map2 == null) return false;
+  if (map1 is! Map || map2 is! Map) return false;
+  if (map1.length != map2.length) return false;
+
+  for (var key in map1.keys) {
+    if (!map2.containsKey(key)) return false;
+    var value1 = map1[key];
+    var value2 = map2[key];
+
+    if (value1 is Map && value2 is Map) {
+      if (!_areMapsEqual(value1, value2)) return false;
+    } else if (value1 is List && value2 is List) {
+      if (value1.length != value2.length) return false;
+      for (var i = 0; i < value1.length; i++) {
+        if (value1[i] is Map && value2[i] is Map) {
+          if (!_areMapsEqual(value1[i], value2[i])) return false;
+        } else if (value1[i] != value2[i]) {
+          return false;
+        }
+      }
+    } else if (value1 != value2) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 class AtlasSDK {
   static String? _appId;
   static String? _atlasId;
+
+  // Store last identified user data
+  static Map<String, dynamic>? _lastIdentifiedUser;
 
   static final List<AtlasErrorHandler> _errorHandlers = [];
   static final List<AtlasChatStartedHandler> _chatStartedHandlers = [];
@@ -118,17 +153,27 @@ class AtlasSDK {
     try {
       final preferences = await SharedPreferences.getInstance();
       String? atlasId = preferences.getString(_storageAtlasId(appId));
+      String? userDataStr = preferences.getString(_storageUserData(appId));
 
       // If user was authenticated while settings were loading, we assume that SDK was already reloaded
       if (_atlasId == null) {
         if (atlasId != null) {
           _atlasId = atlasId;
+          if (userDataStr != null) {
+            try {
+              _lastIdentifiedUser = Map<String, dynamic>.from(jsonDecode(userDataStr));
+            } catch (e) {
+              _log("AtlasSupportSDK: Failed to parse stored user data");
+              _lastIdentifiedUser = null;
+            }
+          }
           _triggerChangeIdentityHandlers(AtlasChangeIdentity(atlasId));
         }
       }
     } catch (error) {
       _triggerChangeIdentityHandlers(null);
       _triggerErrorHandlers(AtlasError("AtlasSupportSDK: Failed to set Atlas ID", error));
+      _lastIdentifiedUser = null;
     }
   }
 
@@ -143,14 +188,38 @@ class AtlasSDK {
     if (_atlasId == atlasId) return;
 
     final SharedPreferences preferences = await SharedPreferences.getInstance();
-    preferences.setString(_storageAtlasId(appId), atlasId);
+    await preferences.setString(_storageAtlasId(appId), atlasId);
     _atlasId = atlasId;
 
     _triggerChangeIdentityHandlers(AtlasChangeIdentity(atlasId), onChange);
   }
 
-  static void logout() {
+  static Future<void> _storeUserData(String appId, Map<String, dynamic> userData) async {
+    try {
+      final preferences = await SharedPreferences.getInstance();
+      await preferences.setString(_storageUserData(appId), jsonEncode(userData));
+      _lastIdentifiedUser = userData;
+    } catch (error) {
+      _log("AtlasSupportSDK: Failed to store user data");
+      _log(error);
+      _lastIdentifiedUser = null;
+    }
+  }
+
+  static Future<void> logout() async {
+    var appId = _appId;
+    if (appId != null) {
+      try {
+        final preferences = await SharedPreferences.getInstance();
+        await preferences.remove(_storageAtlasId(appId));
+        await preferences.remove(_storageUserData(appId));
+      } catch (error) {
+        _log("AtlasSupportSDK: Failed to clear stored data");
+        _log(error);
+      }
+    }
     _atlasId = null;
+    _lastIdentifiedUser = null;
     _triggerChangeIdentityHandlers(null);
   }
 
@@ -178,6 +247,19 @@ class AtlasSDK {
       throw Exception(errorMessage);
     }
 
+    // Check if user data has changed
+    final newUserData = {
+      'userId': userId,
+      'name': name,
+      'email': email,
+      'phoneNumber': phoneNumber,
+      'customFields': customFields,
+    };
+
+    // Deep compare maps and lists in custom fields
+    bool hasChanged = _lastIdentifiedUser == null || !_areMapsEqual(_lastIdentifiedUser, newUserData);
+    if (!hasChanged) return;
+
     return login(
             appId: appId,
             userId: userId,
@@ -187,15 +269,19 @@ class AtlasSDK {
             phoneNumber: phoneNumber,
             customFields: customFields)
         .then((customer) async {
-      var atlasId = customer['id'];
-      if (_atlasId == atlasId) return;
+      var atlasId = customer is Map ? customer['id'] : null;
       if (atlasId is! String) {
         var errorMessage = "AtlasSupportSDK: Invalid atlasId type. Expected String, got ${atlasId.runtimeType}";
         _triggerErrorHandlers(AtlasError(errorMessage), onError);
         throw Exception(errorMessage);
       }
 
-      await _setAtlasId(atlasId, onChange);
+      // Store the new user data after successful login
+      await _storeUserData(appId, newUserData);
+
+      if (_atlasId != atlasId) {
+        await _setAtlasId(atlasId, onChange);
+      }
     }).catchError((error) {
       var errorMessage = "AtlasSupportSDK: Failed to identify user";
       _triggerErrorHandlers(AtlasError(errorMessage, error), onError);
