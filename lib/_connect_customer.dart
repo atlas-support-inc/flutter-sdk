@@ -30,13 +30,13 @@ Function connectCustomer({required String atlasId, required Function onMessage, 
         onError?.call(error);
       }
       if (!synced) {
+        synced = true;
         ch.sink.add(jsonEncode({
           'channel_id': atlasId,
           'channel_kind': 'CUSTOMER',
-          'packet_type': 'REFRESH_DATA',
-          'payload': {'entity': 'conversations'},
+          'packet_type': 'FETCH_DATA',
+          'payload': {'data': ['conversations']},
         }));
-        synced = true;
       }
     }, onDone: () {
       if (killed) return;
