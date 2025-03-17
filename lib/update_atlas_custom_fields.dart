@@ -5,6 +5,7 @@ import '_config.dart';
 Future<void> updateAtlasCustomFields(
     String atlasId, String ticketId, Map<String, dynamic> customFields,
     {String? userHash}) async {
+  print("Updating custom fields for ticket $ticketId ($customFields)");
   await http.post(
     Uri.parse(
         '$atlasApiBaseUrl/client-app/ticket/$atlasId/update_custom_fields'),

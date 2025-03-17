@@ -50,6 +50,7 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
       ...widget.query == null || widget.query == "" ? {} : {'query': widget.query!.replaceAll(RegExp(r'\s'), '')},
       ...widget.atlasId == null || widget.atlasId == "" ? {} : {'atlasId': widget.atlasId},
     });
+    print("Loading page with URL: $url");
     controller.loadRequest(url);
   }
 

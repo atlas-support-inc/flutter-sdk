@@ -7,13 +7,51 @@ import 'package:badges/badges.dart' as badges;
 var appId = 'w51lhvyut7';
 
 class DemoUser {
-  final String userId;
   final String atlasId;
-  DemoUser(this.userId, this.atlasId);
+  final String userId;
+  final String userHash;
+  DemoUser(this.atlasId, this.userId, this.userHash);
 }
 
-var userAdam = DemoUser('adam', '86427437-8d4e-425c-bae1-109cf7ecbfc5');
-var userSara = DemoUser('sara', '4ae4ee1b-5925-4059-9932-16cdf60d5ba9');
+var userAdam = DemoUser(
+    '86427437-8d4e-425c-bae1-109cf7ecbfc5', 'adam', '28af9d7e2fe67562e0b3dc0e4df9ae070be4a286f28fed8bd9eb555b68feb399');
+var userSara = DemoUser(
+    '4ae4ee1b-5925-4059-9932-16cdf60d5ba9', 'sara', 'edceaca5418b1e3bf339af13460236dbae40a335a2d1b8148681adaa2cc5753e');
+
+class Product {
+  final String id;
+  final String name;
+  final double price;
+  final Color color;
+  final String emoji;
+  bool inCart;
+
+  Product(this.id, this.name, this.price, this.color, this.emoji, {this.inCart = false});
+}
+
+final List<Product> products = [
+  Product(
+    '1',
+    'Magic Sword',
+    299.99,
+    const Color(0xFFFF6B6B),
+    '⚔️',
+  ),
+  Product(
+    '2',
+    'Shield of Protection',
+    199.99,
+    const Color(0xFF4ECDC4),
+    '🛡️',
+  ),
+  Product(
+    '3',
+    'Health Potion',
+    49.99,
+    const Color(0xFF45B7D1),
+    '🧪',
+  ),
+];
 
 void main() {
   runApp(const MyApp());
@@ -95,7 +133,22 @@ class _MyHomePageState extends State<MyHomePage> {
 
     // Watch for new conversations
 
-    var disposeChatStartedHandler = AtlasSDK.onChatStarted((chatStarted) => print("onChatStarted($chatStarted)"));
+    var disposeChatStartedHandler = AtlasSDK.onChatStarted((chatStarted) {
+      print("onChatStarted($chatStarted)");
+      // Get list of products that are in the cart
+      final selectedProducts = products
+          .where((product) => product.inCart)
+          .map((product) => product.name)
+          .toList();
+      
+      // Update custom fields with selected products
+      if (selectedProducts.isNotEmpty) {
+        AtlasSDK().updateCustomFields(
+          chatStarted.ticketId,
+          {'products': selectedProducts},
+        );
+      }
+    });
     var disposeNewTicketHandler = AtlasSDK.onNewTicket((newTicket) => print("onNewTicket($newTicket)"));
 
     _dispose = () {
@@ -158,12 +211,55 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         body: TabBarView(
           children: [
-            const Center(
+            // Store screen
+            Padding(
+              padding: const EdgeInsets.all(16.0),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Text(
-                    'Products list',
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Products',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: products.length,
+                      itemBuilder: (context, index) {
+                        final product = products[index];
+                        return Card(
+                          child: ListTile(
+                            leading: Container(
+                              width: 56,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                color: product.color,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  product.emoji,
+                                  style: const TextStyle(fontSize: 24),
+                                ),
+                              ),
+                            ),
+                            title: Text(product.name),
+                            subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
+                            trailing: Switch(
+                              value: product.inCart,
+                              onChanged: (bool value) {
+                                setState(() {
+                                  product.inCart = value;
+                                });
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -235,6 +331,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       final title = _titleController.text;
                       AtlasSDK.identify(
                         userId: userId,
+                        userHash: userId == userAdam.userId ? userAdam.userHash : userId == userSara.userId ? userSara.userHash : null,
                         name: name.trim() != "" ? name : null,
                         email: email.trim() != "" ? email : null,
                         phoneNumber: phoneNumber.trim() != "" ? phoneNumber : null,

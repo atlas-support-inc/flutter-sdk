@@ -250,6 +250,7 @@ class AtlasSDK {
     // Check if user data has changed
     final newUserData = {
       'userId': userId,
+      'userHash': userHash,
       'name': name,
       'email': email,
       'phoneNumber': phoneNumber,
@@ -290,8 +291,7 @@ class AtlasSDK {
     });
   }
 
-  // ignore: unused_element
-  Future<void> _updateCustomFields(String ticketId, Map<String, dynamic> customFields) async {
+  Future<void> updateCustomFields(String ticketId, Map<String, dynamic> customFields) async {
     var appId = _appId;
     if (appId == null || appId == "") {
       var errorMessage = "AtlasSupportSDK: Cannot call updateCustomFields() without App ID set";
@@ -314,8 +314,18 @@ class AtlasSDK {
       throw Exception(errorMessage);
     }
 
-    // TODO: ❗ Requires userHash that we are missing
-    await updateAtlasCustomFields(atlasId, ticketId, customFields);
+    // Get and validate userHash from last identified user data
+    var userHashValue = _lastIdentifiedUser?['userHash'];
+    String? userHash;
+    if (userHashValue != null) {
+      if (userHashValue is! String) {
+        var errorMessage = "AtlasSupportSDK: Invalid userHash type. Expected String or null, got ${userHashValue.runtimeType}";
+        _triggerErrorHandlers(AtlasError(errorMessage));
+        throw Exception(errorMessage);
+      }
+      userHash = userHashValue;
+    }
+    await updateAtlasCustomFields(atlasId, ticketId, customFields, userHash: userHash);
   }
 
   static watchStats(AtlasWatcherStatsChangeHandler callback, [AtlasWatcherErrorHandler? onError]) {

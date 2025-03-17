@@ -42,9 +42,9 @@ Future login(
             body is Map && body.containsKey('detail') && body['detail'] is String ? body['detail'] : jsonEncode(body);
 
         throw Exception("Login failed: $errorMessage");
-      } catch (err) {}
-
-      throw Exception("Login failed: HTTP(${response.statusCode}) $text");
+      } catch (err) {
+        throw Exception("Login failed: HTTP(${response.statusCode}) $text");
+      }
     },
   );
 }
