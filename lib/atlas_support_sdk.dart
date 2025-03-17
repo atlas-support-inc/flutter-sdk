@@ -9,6 +9,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 import 'package:atlas_support_sdk/_dynamic_atlas_support_widget.dart';
 import 'package:atlas_support_sdk/update_atlas_custom_fields.dart';
+import 'package:atlas_support_sdk/_validate_custom_fields.dart';
 
 void _log(dynamic message) {
   // ignore: avoid_print
@@ -169,6 +170,14 @@ class AtlasSDK {
       throw Exception(errorMessage);
     }
 
+    // Validate custom fields
+    final validationErrors = validateCustomFields(customFields);
+    if (validationErrors.isNotEmpty) {
+      var errorMessage = "AtlasSupportSDK: Invalid custom fields:\n${validationErrors.join("\n")}";
+      _triggerErrorHandlers(AtlasError(errorMessage), onError);
+      throw Exception(errorMessage);
+    }
+
     return login(
             appId: appId,
             userId: userId,
@@ -207,6 +216,14 @@ class AtlasSDK {
     var atlasId = _atlasId;
     if (atlasId == null) {
       var errorMessage = "AtlasSupportSDK: Cannot call updateCustomFields() while not authenticated";
+      _triggerErrorHandlers(AtlasError(errorMessage));
+      throw Exception(errorMessage);
+    }
+
+    // Validate custom fields
+    final validationErrors = validateCustomFields(customFields);
+    if (validationErrors.isNotEmpty) {
+      var errorMessage = "AtlasSupportSDK: Invalid custom fields:\n${validationErrors.join("\n")}";
       _triggerErrorHandlers(AtlasError(errorMessage));
       throw Exception(errorMessage);
     }

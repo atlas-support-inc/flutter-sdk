@@ -238,7 +238,9 @@ class _MyHomePageState extends State<MyHomePage> {
                         name: name.trim() != "" ? name : null,
                         email: email.trim() != "" ? email : null,
                         phoneNumber: phoneNumber.trim() != "" ? phoneNumber : null,
-                        customFields: title.trim() != "" ? {'title': title} : null,
+                        customFields: {
+                          if (title.trim() != "") 'title': title,
+                        },
                       );
                     },
                     child: const Text('Identify'),
