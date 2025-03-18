@@ -115,7 +115,7 @@ AtlasSDK.onError((error) {
 The SDK provides several event handlers to monitor chat activities:
 
 ```dart
-// Triggered whenever user submits first message in the chat
+// Triggered whenever user starts new chat
 AtlasSDK.onChatStarted((chatStarted) {
   var message = "💬 New chat: ${chatStarted.ticketId}"
   if (chatStarted.chatbotKey != null) message += " (🤖 via chatbot ${chatStarted.chatbotKey})"; 
