@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 class ProductVariation {
   final String id;
   final double price;
