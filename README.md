@@ -27,8 +27,9 @@ AtlasSDK.setAppId("YOUR_APP_ID");
 
 **ℹ️ It's crucial to execute this code at the app's launch, as SDK functionality will be unavailable otherwise.**
 
-## Identify your users
+## User Management
 
+### Identify Users
 Make the following call with user details wherever a user logs into your application:
 
 ```dart
@@ -51,6 +52,14 @@ Optional parameters like `name`, `email`, or `phoneNumber` should be set to null
 
 When you want to update the user's details, you can call `identify` method again.
 
+### Check User Identity
+You can check the current Atlas ID at any time:
+
+```dart
+String? currentAtlasId = AtlasSDK.getAtlasId();
+```
+
+### Logout
 To clear the user's session when they log out of your application, use:
 
 ```dart
@@ -60,7 +69,6 @@ AtlasSDK.logout();
 ## Atlas Widget
 
 ### Basic Implementation
-
 To display the Atlas chat widget in your Flutter app:
 
 ```dart
@@ -68,7 +76,6 @@ AtlasSDK.Widget();
 ```
 
 ### Configuring the Widget
-
 You can configure how Atlas UI looks through the [Chat Configuration page](https://app.atlas.so/configuration/chat). You can also configure the behavior using query parameters:
 
 ```dart
@@ -83,42 +90,46 @@ AtlasSDK.Widget(query: "chatbotKey: report_bug; prefer: last")
 ```
 
 ### Persistent Chat Sessions
-
 To maintain chat state across widget rebuilds, use the `persist` parameter:
 
 ```dart
 AtlasSDK.Widget(
-  persist: "order_instance",
-  query: "chatbotKey: order",
+  persist: "unique_key",  // Controllers are stored by this key
+  query: "chatbotKey: support"
 )
 ```
 
 ## Event Handling
 
+### Error Handling
+The SDK provides detailed error information through the `AtlasError` class:
+
+```dart
+AtlasSDK.onError((error) {
+  print("Error message: ${error.message}");
+  print("Original error: ${error.original}"); // Additional error details if available
+});
+```
+
+### Ticket Events
 The SDK provides several event handlers to monitor chat activities:
 
 ```dart
-// Handle errors
-AtlasSDK.onError((error) {
-  print(error.message);
-  if (error.original != null) print(error.original);
-});
-
-// Track new chat sessions
+// Triggered whenever user submits first message in the chat
 AtlasSDK.onChatStarted((chatStarted) {
   var message = "💬 New chat: ${chatStarted.ticketId}"
   if (chatStarted.chatbotKey != null) message += " (🤖 via chatbot ${chatStarted.chatbotKey})"; 
   print(message);
 });
 
-// Monitor new tickets
+// Triggered when either basic chat has started, or chatbot has created ticket from the conversation
 AtlasSDK.onNewTicket((newTicket) {
   var message = "🎫 New ticket: ${newTicket.ticketId}"; 
-  if (chatStarted.chatbotKey != null) message += " (🤖 via chatbot ${chatStarted.chatbotKey})"; 
+  if (newTicket.chatbotKey != null) message += " (🤖 via chatbot ${newTicket.chatbotKey})"; 
   print(message);
 });
 
-// Watch for identity changes
+// Triggered when user identity is changed or removed
 AtlasSDK.onChangeIdentity((identity) {
   if (identity == null) {
     print("User logged out");
@@ -127,14 +138,105 @@ AtlasSDK.onChangeIdentity((identity) {
   }
 });
 
-// Track conversation statistics
+// Triggered when messages are received, read, or ticket is closed/reopened
 AtlasSDK.watchStats((stats) {
   var unreadCount = stats.conversations.fold(0, (sum, conversation) => sum + conversation.unread);
   print("Unread conversations: ${unreadCount}");
 });
 ```
 
-Each event handler returns a dispose function that can be called to remove the listener.
+### Event Handler Cleanup
+All event handlers return a dispose function that should be called when the listener is no longer needed:
+
+```dart
+// Register handler
+final dispose = AtlasSDK.onError((error) {
+  print(error.message);
+});
+
+// Later, when you want to remove the handler
+dispose();
+```
+
+## Ticket Management
+
+### Custom Fields
+You can update custom fields for a specific ticket after it's created:
+
+```dart
+AtlasSDK.updateCustomFields(
+  "ticket_123",
+  {
+    "priority": "high",
+    "category": "billing",
+    // Any valid custom field
+  }
+);
+```
+
+#### Custom Field Types
+The SDK supports various custom field types. Here's how to properly format each type:
+
+```dart
+{
+  // Text field (string)
+  "description": "Customer feedback",
+  
+  // Number field (integer)
+  "age": 25,
+  
+  // Decimal field (number with decimal places)
+  "price": 99.99,
+  
+  // Date field (YYYY-MM-DD format)
+  "birthDate": "1990-01-01",
+  
+  // List field (single selection from predefined list)
+  "status": "active",
+  
+  // Multi field (multiple selections from predefined list)
+  "tags": ["urgent", "billing"],
+  
+  // URL field (object with url and title)
+  "website": {
+    "url": "https://example.com",
+    "title": "Company Website"
+  },
+  
+  // Address field (object with address components, each is optional)
+  "shippingAddress": {
+    "street1": "123 Main St",
+    "street2": "Apt 4B",
+    "city": "New York",
+    "state": "NY",
+    "zipCode": "10001",
+    "country": "US"
+  },
+  
+  // Agent field (UUID)
+  "assignedAgent": "550e8400-e29b-41d4-a716-446655440000",
+  
+  // Customer field (UUID)
+  "customerId": "550e8400-e29b-41d4-a716-446655440000",
+  
+  // Account field (UUID)
+  "accountId": "550e8400-e29b-41d4-a716-446655440000",
+  
+  // Ticket field (UUID)
+  "relatedTicket": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+## Data Management
+
+### Storage and Persistence
+The SDK automatically handles:
+- Persistent storage of user identification
+- Chat session management
+- Controller state persistence when using the `persist` parameter
+- Automatic reconnection handling
+
+All data is securely stored using the device's SharedPreferences.
 
 ## Requirements
 
