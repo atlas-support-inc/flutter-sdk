@@ -2,7 +2,6 @@
 
 import 'package:atlas_support_sdk/atlas_support_sdk.dart';
 import 'package:flutter/material.dart';
-import 'package:badges/badges.dart' as badges;
 import 'models/product.dart';
 import 'services/wordpress_service.dart';
 import 'screens/product_details_screen.dart';
@@ -281,32 +280,145 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       appBar: AppBar(
         title: Text(widget.title),
         actions: <Widget>[
-          badges.Badge(
-              showBadge: _unreadCount > 0,
-              badgeContent: Text(_unreadCount.toString()),
-              position: badges.BadgePosition.topEnd(top: 5, end: 5),
-              child: IconButton(
-                  icon: const Icon(Icons.help),
-                  onPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      enableDrag: false,
-                      showDragHandle: true,
-                      builder: (BuildContext context) {
-                        return SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.82,
-                          child: SafeArea(
-                            child: Scaffold(
-                              body: AtlasSDK.Widget(
-                                persist: "global",
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => Scaffold(
+                    appBar: AppBar(
+                      title: const Text('Settings'),
+                    ),
+                    body: SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          children: <Widget>[
+                            RadioListTile(
+                              title: Text('User ID: "${userAdam.userId}"'),
+                              value: userAdam.userId,
+                              groupValue: _userIdController.text,
+                              onChanged: (value) {
+                                setState(() {
+                                  _userIdController.text = value as String;
+                                });
+                              },
+                            ),
+                            RadioListTile(
+                              title: Text('User ID: "${userSara.userId}"'),
+                              value: userSara.userId,
+                              groupValue: _userIdController.text,
+                              onChanged: (value) {
+                                setState(() {
+                                  _userIdController.text = value as String;
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 10),
+                            TextField(
+                              decoration: const InputDecoration(
+                                labelText: 'Name',
+                                border: OutlineInputBorder(),
+                              ),
+                              controller: _nameController,
+                            ),
+                            const SizedBox(height: 10),
+                            TextField(
+                              decoration: const InputDecoration(
+                                labelText: 'Email',
+                                border: OutlineInputBorder(),
+                              ),
+                              controller: _emailController,
+                            ),
+                            const SizedBox(height: 10),
+                            TextField(
+                              decoration: const InputDecoration(
+                                labelText: 'Phone Number',
+                                border: OutlineInputBorder(),
+                              ),
+                              controller: _phoneNumberController,
+                            ),
+                            const SizedBox(height: 10),
+                            TextField(
+                              decoration: const InputDecoration(
+                                labelText: 'Title',
+                                border: OutlineInputBorder(),
+                              ),
+                              controller: _titleController,
+                            ),
+                            const SizedBox(height: 20),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                ElevatedButton(
+                                  onPressed: () {
+                                    final userId = _userIdController.text;
+                                    final name = _nameController.text;
+                                    final email = _emailController.text;
+                                    final phoneNumber = _phoneNumberController.text;
+                                    final title = _titleController.text;
+                                    AtlasSDK.identify(
+                                      userId: userId,
+                                      userHash: userId == userAdam.userId
+                                          ? userAdam.userHash
+                                          : userId == userSara.userId
+                                              ? userSara.userHash
+                                              : null,
+                                      name: name.trim() != "" ? name : null,
+                                      email: email.trim() != "" ? email : null,
+                                      phoneNumber: phoneNumber.trim() != "" ? phoneNumber : null,
+                                      customFields: {
+                                        if (title.trim() != "") 'title': title,
+                                      },
+                                    );
+                                  },
+                                  child: const Text('Identify'),
+                                ),
+                                const ElevatedButton(
+                                  onPressed: AtlasSDK.logout,
+                                  child: const Text('Logout'),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  enableDrag: false,
+                                  showDragHandle: true,
+                                  builder: (BuildContext context) {
+                                    return SizedBox(
+                                      height: MediaQuery.of(context).size.height * 0.82,
+                                      child: SafeArea(
+                                        child: Scaffold(
+                                          body: AtlasSDK.Widget(
+                                            persist: "settings-help-center",
+                                            query: 'open: helpcenter'
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                              icon: const Icon(Icons.help),
+                              label: const Text('Help Center'),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                               ),
                             ),
-                          ),
-                        );
-                      },
-                    );
-                  }))
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
         ],
         bottom: TabBar(
           controller: _tabController,
@@ -316,7 +428,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               icon: const Icon(Icons.shopping_cart),
               text: _cartItems.isEmpty ? 'Cart' : 'Cart (${_cartItems.fold(0, (sum, item) => sum + item.quantity)})',
             ),
-            const Tab(icon: Icon(Icons.person), text: 'Profile'),
+            Tab(
+              icon: const Icon(Icons.help),
+              text: _unreadCount > 0 ? 'Help ($_unreadCount)' : 'Help',
+            ),
           ],
         ),
       ),
@@ -390,96 +505,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               onRemoveItem: _removeFromCart,
             ),
           ),
-          // Profile screen
+          // Help screen
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                children: <Widget>[
-                  RadioListTile(
-                    title: Text('User ID: "${userAdam.userId}"'),
-                    value: userAdam.userId,
-                    groupValue: _userIdController.text,
-                    onChanged: (value) {
-                      setState(() {
-                        _userIdController.text = value as String;
-                      });
-                    },
-                  ),
-                  RadioListTile(
-                    title: Text('User ID: "${userSara.userId}"'),
-                    value: userSara.userId,
-                    groupValue: _userIdController.text,
-                    onChanged: (value) {
-                      setState(() {
-                        _userIdController.text = value as String;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    decoration: const InputDecoration(
-                      labelText: 'Name',
-                      border: OutlineInputBorder(),
-                    ),
-                    controller: _nameController,
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      border: OutlineInputBorder(),
-                    ),
-                    controller: _emailController,
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    decoration: const InputDecoration(
-                      labelText: 'Phone Number',
-                      border: OutlineInputBorder(),
-                    ),
-                    controller: _phoneNumberController,
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    decoration: const InputDecoration(
-                      labelText: 'Title',
-                      border: OutlineInputBorder(),
-                    ),
-                    controller: _titleController,
-                  ),
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      final userId = _userIdController.text;
-                      final name = _nameController.text;
-                      final email = _emailController.text;
-                      final phoneNumber = _phoneNumberController.text;
-                      final title = _titleController.text;
-                      AtlasSDK.identify(
-                        userId: userId,
-                        userHash: userId == userAdam.userId
-                            ? userAdam.userHash
-                            : userId == userSara.userId
-                                ? userSara.userHash
-                                : null,
-                        name: name.trim() != "" ? name : null,
-                        email: email.trim() != "" ? email : null,
-                        phoneNumber: phoneNumber.trim() != "" ? phoneNumber : null,
-                        customFields: {
-                          if (title.trim() != "") 'title': title,
-                        },
-                      );
-                    },
-                    child: const Text('Identify'),
-                  ),
-                  const SizedBox(height: 10),
-                  const ElevatedButton(
-                    onPressed: AtlasSDK.logout,
-                    child: Text('Logout'),
-                  ),
-                ],
-              ),
+            child: AtlasSDK.Widget(
+              persist: "main-chat",
             ),
           ),
         ],
