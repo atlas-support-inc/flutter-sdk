@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:atlas_support_sdk/atlas_support_sdk.dart';
 import '../models/product.dart';
 import '../services/wordpress_service.dart';
 
@@ -7,7 +8,7 @@ class ProductDetailsScreen extends StatefulWidget {
   final Function(Product product)? onCartUpdated;
 
   const ProductDetailsScreen({
-    super.key, 
+    super.key,
     required this.productId,
     this.onCartUpdated,
   });
@@ -72,9 +73,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
-            onPressed: _quantity > 1
-                ? () => setState(() => _quantity--)
-                : null,
+            onPressed: _quantity > 1 ? () => setState(() => _quantity--) : null,
             icon: const Icon(Icons.remove),
             color: _quantity > 1 ? Theme.of(context).primaryColor : Colors.grey,
           ),
@@ -108,13 +107,15 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: product.isInStock ? () {
-          setState(() {
-            product.quantity = _quantity;
-            widget.onCartUpdated?.call(product);
-          });
-          Navigator.pop(context);
-        } : null,
+        onPressed: product.isInStock
+            ? () {
+                setState(() {
+                  product.quantity = _quantity;
+                  widget.onCartUpdated?.call(product);
+                });
+                Navigator.pop(context);
+              }
+            : null,
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
@@ -210,16 +211,26 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (product.categories.isNotEmpty)
+                        if (product.categories.isNotEmpty) ...[
+                          const SizedBox(height: 8),
                           Wrap(
                             spacing: 8,
-                            children: product.categories
-                                .map((category) => Chip(
-                                      label: Text(category),
-                                      backgroundColor: Colors.grey[200],
-                                    ))
-                                .toList(),
+                            children: product.categories.map((category) {
+                              return Chip(
+                                label: Text(
+                                  category,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[800],
+                                  ),
+                                ),
+                                backgroundColor: Colors.grey[100],
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              );
+                            }).toList(),
                           ),
+                        ],
                         const SizedBox(height: 8),
                         Text(
                           product.name,
@@ -275,6 +286,55 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                               ],
                             ),
                           ),
+                          const SizedBox(height: 24),
+                          OutlinedButton(
+                            onPressed: () {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                enableDrag: false,
+                                showDragHandle: true,
+                                builder: (BuildContext context) {
+                                  return SizedBox(
+                                    height: MediaQuery.of(context).size.height * 0.82,
+                                    child: SafeArea(
+                                      child: Scaffold(
+                                        body: AtlasSDK.Widget(
+                                          query: "chatbotKey: product_details; prefer: new",
+                                          onNewTicket: (chatStarted) {
+                                            AtlasSDK().updateCustomFields(
+                                              chatStarted.ticketId,
+                                              {
+                                                'product_link': {'url': product.link, 'title': product.name}
+                                              },
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size(double.infinity, 48),
+                              side: BorderSide(color: Theme.of(context).primaryColor),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.help_outline, color: Theme.of(context).primaryColor),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Ask About This Product',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Theme.of(context).primaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ],
                       ],
                     ),
@@ -287,4 +347,4 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       ),
     );
   }
-} 
+}

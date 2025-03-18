@@ -2,8 +2,9 @@ library atlas_support_sdk;
 
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+
 import '_dynamic_atlas_support_widget_state.dart';
-import 'atlas_support_widget.dart';
+import '_atlas_support_widget.dart';
 
 class DynamicAtlasSupportWidget extends StatefulWidget {
   final String appId;

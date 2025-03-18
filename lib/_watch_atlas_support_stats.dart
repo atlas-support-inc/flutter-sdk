@@ -74,7 +74,7 @@ Function watchAtlasSupportStats(
               }
               break;
             case 'CHATBOT_WIDGET_RESPONSE':
-              var message = jsonDecode(data['payload']['message']);
+              var message = data['payload'].containsKey('message') ? jsonDecode(data['payload']['message']) : null;
               if (message == null || message is! Map) return;
 
               try {

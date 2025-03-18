@@ -1,7 +1,8 @@
 library atlas_support_sdk;
 
 import 'package:flutter/material.dart';
-import 'atlas_support_widget_state.dart';
+
+import '_atlas_support_widget_state.dart';
 
 typedef AtlasWidgetChatStartedHandler = void Function(
     Map<String, dynamic> ticket); // {String ticketId, String? chatbotKey}

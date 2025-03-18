@@ -115,22 +115,13 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     // Watch for new conversations
 
     var disposeChatStartedHandler = AtlasSDK.onChatStarted((chatStarted) {
-      print("onChatStarted($chatStarted)");
-      // Get list of products that are in the cart
-      final selectedProducts = _products
-          .where((product) => product.inCart)
-          .map((product) => product.name)
-          .toList();
-      
-      // Update custom fields with selected products
-      if (selectedProducts.isNotEmpty) {
-        AtlasSDK().updateCustomFields(
-          chatStarted.ticketId,
-          {'products': selectedProducts},
-        );
-      }
+      print(
+          "onChatStarted(ticketId: ${chatStarted.ticketId}${chatStarted.chatbotKey != null ? ', chatbotKey: ${chatStarted.chatbotKey}' : ''})");
     });
-    var disposeNewTicketHandler = AtlasSDK.onNewTicket((newTicket) => print("onNewTicket($newTicket)"));
+    var disposeNewTicketHandler = AtlasSDK.onNewTicket((newTicket) {
+      print(
+          "onNewTicket(ticketId: ${newTicket.ticketId}${newTicket.chatbotKey != null ? ', chatbotKey: ${newTicket.chatbotKey}' : ''})");
+    });
 
     _dispose = () {
       disposeErrorHandler();
@@ -159,7 +150,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
     try {
       final newProducts = await _wordPressService.getProducts(page: _currentPage);
-      
+
       setState(() {
         _products.addAll(newProducts.map((data) => Product.fromJson(data)));
         _currentPage++;
@@ -467,7 +458,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                       final title = _titleController.text;
                       AtlasSDK.identify(
                         userId: userId,
-                        userHash: userId == userAdam.userId ? userAdam.userHash : userId == userSara.userId ? userSara.userHash : null,
+                        userHash: userId == userAdam.userId
+                            ? userAdam.userHash
+                            : userId == userSara.userId
+                                ? userSara.userHash
+                                : null,
                         name: name.trim() != "" ? name : null,
                         email: email.trim() != "" ? email : null,
                         phoneNumber: phoneNumber.trim() != "" ? phoneNumber : null,

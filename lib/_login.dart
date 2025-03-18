@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+
 import '_config.dart';
 
 const _loginUrl = "$atlasApiBaseUrl/client-app/company/identify";

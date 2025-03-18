@@ -31,9 +31,9 @@ List<String> validateCustomFields(Map<String, dynamic>? customFields) {
     // URL field validation
     if (value is Map) {
       if (value.containsKey('url') &&
-          value.containsKey('label') &&
+          value.containsKey('title') &&
           value['url'] is String &&
-          value['label'] is String) {
+          value['title'] is String) {
         return;
       }
 
@@ -54,7 +54,7 @@ List<String> validateCustomFields(Map<String, dynamic>? customFields) {
       }
 
       errors.add('"$key" has invalid structure. Expected format:\n'
-          '\tFor URL: {"url": "string", "label": "string"}\n'
+          '\tFor URL: {"url": "string", "title": "string"}\n'
           '\tFor Address: {"street1": "string", "street2": "string", "city": "string", "state": "string", "zipCode": "string", "country": "string"}');
       return;
     }

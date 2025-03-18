@@ -1,9 +1,9 @@
 library atlas_support_sdk;
 
-import 'package:atlas_support_sdk/atlas_support_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+import '_atlas_support_widget.dart';
 import '_atlas_support_controllable_widget_state.dart';
 
 class AtlasSupportControllableWidget extends AtlasSupportWidget {
@@ -34,6 +34,5 @@ class AtlasSupportControllableWidget extends AtlasSupportWidget {
             onChangeIdentity: onChangeIdentity);
 
   @override
-  State<AtlasSupportWidget> createState() =>
-      AtlasSupportControllableWidgetState();
+  State<AtlasSupportWidget> createState() => AtlasSupportControllableWidgetState();
 }

@@ -7,8 +7,8 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
-import 'atlas_support_widget.dart';
 import '_config.dart';
+import '_atlas_support_widget.dart';
 import '_get_package_version.dart';
 
 class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
@@ -72,7 +72,7 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
     controller.setJavaScriptMode(JavaScriptMode.unrestricted);
     _loadPage(controller);
 
-    controller.addJavaScriptChannel("FlutterWebView", onMessageReceived: (package) {
+    controller.addJavaScriptChannel("atlasMessageHandler", onMessageReceived: (package) {
       try {
         final message = (jsonDecode(package.message) as Map<String, dynamic>);
         if (message['type'] == 'atlas:error') {

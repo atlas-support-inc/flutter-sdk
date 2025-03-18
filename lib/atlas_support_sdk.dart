@@ -3,14 +3,14 @@
 // Null check operator used on a null value
 
 import 'dart:convert';
-import 'package:atlas_support_sdk/_login.dart';
-import 'package:atlas_support_sdk/watch_atlas_support_stats.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-import 'package:atlas_support_sdk/_dynamic_atlas_support_widget.dart';
-import 'package:atlas_support_sdk/update_atlas_custom_fields.dart';
-import 'package:atlas_support_sdk/_validate_custom_fields.dart';
+import '_login.dart';
+import '_watch_atlas_support_stats.dart';
+import '_dynamic_atlas_support_widget.dart';
+import '_update_atlas_custom_fields.dart';
+import '_validate_custom_fields.dart';
 
 void _log(dynamic message) {
   // ignore: avoid_print
@@ -299,6 +299,13 @@ class AtlasSDK {
       throw Exception(errorMessage);
     }
 
+    var atlasId = _atlasId;
+    if (atlasId == null || atlasId == "") {
+      var errorMessage = "AtlasSupportSDK: Cannot call updateCustomFields() without Atlas ID set";
+      _triggerErrorHandlers(AtlasError(errorMessage));
+      throw Exception(errorMessage);
+    }
+
     // Get and validate userId from last identified user data
     var userIdValue = _lastIdentifiedUser?['userId'];
     if (userIdValue == null || userIdValue is! String) {
@@ -320,13 +327,14 @@ class AtlasSDK {
     String? userHash;
     if (userHashValue != null) {
       if (userHashValue is! String) {
-        var errorMessage = "AtlasSupportSDK: Invalid userHash type. Expected String or null, got ${userHashValue.runtimeType}";
+        var errorMessage =
+            "AtlasSupportSDK: Invalid userHash type. Expected String or null, got ${userHashValue.runtimeType}";
         _triggerErrorHandlers(AtlasError(errorMessage));
         throw Exception(errorMessage);
       }
       userHash = userHashValue;
     }
-    await updateAtlasCustomFields(userIdValue, ticketId, customFields, userHash: userHash);
+    await updateAtlasCustomFields(atlasId, ticketId, customFields, userHash: userHash);
   }
 
   static watchStats(AtlasWatcherStatsChangeHandler callback, [AtlasWatcherErrorHandler? onError]) {
