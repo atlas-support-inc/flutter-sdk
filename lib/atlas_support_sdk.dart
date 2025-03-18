@@ -1,7 +1,3 @@
-// TODO: When chatbot get the first user input this error is thrown:
-// The following _TypeError was thrown during a platform message callback:
-// Null check operator used on a null value
-
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:webview_flutter/webview_flutter.dart';
