@@ -39,50 +39,57 @@ typedef AtlasNewTicketHandler = void Function(AtlasNewTicket ticket);
 
 class AtlasChangeIdentity {
   final String atlasId;
-  AtlasChangeIdentity(this.atlasId);
+  final String userId;
+  AtlasChangeIdentity(this.atlasId, this.userId);
 }
 
 typedef AtlasChangeIdentityHandler = void Function(AtlasChangeIdentity? identity);
 
-String _storageAtlasId(String appId) => '@atlas.so/$appId/atlasId';
-String _storageUserData(String appId) => '@atlas.so/$appId/userData';
+class AtlasIdentity {
+  final String atlasId;
+  final String userId;
+  final String? userHash;
 
-bool _areMapsEqual(dynamic map1, dynamic map2) {
-  if (map1 == null && map2 == null) return true;
-  if (map1 == null || map2 == null) return false;
-  if (map1 is! Map || map2 is! Map) return false;
-  if (map1.length != map2.length) return false;
+  AtlasIdentity({
+    required this.atlasId,
+    required this.userId,
+    this.userHash,
+  });
 
-  for (var key in map1.keys) {
-    if (!map2.containsKey(key)) return false;
-    var value1 = map1[key];
-    var value2 = map2[key];
+  Map<String, dynamic> toJson() => {
+        'atlasId': atlasId,
+        'userId': userId,
+        if (userHash != null) 'userHash': userHash,
+      };
 
-    if (value1 is Map && value2 is Map) {
-      if (!_areMapsEqual(value1, value2)) return false;
-    } else if (value1 is List && value2 is List) {
-      if (value1.length != value2.length) return false;
-      for (var i = 0; i < value1.length; i++) {
-        if (value1[i] is Map && value2[i] is Map) {
-          if (!_areMapsEqual(value1[i], value2[i])) return false;
-        } else if (value1[i] != value2[i]) {
-          return false;
-        }
-      }
-    } else if (value1 != value2) {
-      return false;
+  static AtlasIdentity? fromJson(Map<String, dynamic>? json) {
+    if (json == null) return null;
+
+    var atlasId = json['atlasId'];
+    var userId = json['userId'];
+
+    if (atlasId == null || atlasId is! String || userId == null || userId is! String) {
+      return null;
     }
-  }
 
-  return true;
+    var userHash = json['userHash'];
+    if (userHash != null && userHash is! String) {
+      return null;
+    }
+
+    return AtlasIdentity(
+      atlasId: atlasId,
+      userId: userId,
+      userHash: userHash,
+    );
+  }
 }
+
+String _storageIdentityKey(String appId) => '@atlas.so/$appId/identity';
 
 class AtlasSDK {
   static String? _appId;
-  static String? _atlasId;
-
-  // Store last identified user data
-  static Map<String, dynamic>? _lastIdentifiedUser;
+  static AtlasIdentity? _identity;
 
   static final List<AtlasErrorHandler> _errorHandlers = [];
   static final List<AtlasChatStartedHandler> _chatStartedHandlers = [];
@@ -91,7 +98,65 @@ class AtlasSDK {
 
   static final Map<String, WebViewController> _controllers = {};
 
-  static String? getAtlasId() => _atlasId;
+  static String? getAtlasId() => _identity?.atlasId;
+  static String? getUserId() => _identity?.userId;
+
+  static Map<String, dynamic>? _validateNewTicketData(dynamic data, AtlasErrorHandler? onError) {
+    if (data is! Map) {
+      _triggerErrorHandlers(AtlasError("AtlasSupportSDK: Received invalid ticket data format"), onError);
+      return null;
+    }
+
+    var ticketId = data['ticketId'];
+    var chatbotKey = data['chatbotKey'];
+
+    if (ticketId == null || ticketId is! String) {
+      _triggerErrorHandlers(AtlasError("AtlasSupportSDK: Missing or invalid ticketId in ticket data"), onError);
+      return null;
+    }
+
+    if (chatbotKey != null && chatbotKey is! String) {
+      _triggerErrorHandlers(AtlasError("AtlasSupportSDK: Invalid chatbotKey type in ticket data"), onError);
+      return null;
+    }
+
+    return {
+      'ticketId': ticketId,
+      'chatbotKey': chatbotKey,
+    };
+  }
+
+  static Map<String, dynamic>? _validateIdentityData(dynamic data, AtlasErrorHandler? onError) {
+    if (data is! Map) {
+      _triggerErrorHandlers(AtlasError("AtlasSupportSDK: Received invalid identity data format"), onError);
+      return null;
+    }
+
+    var atlasId = data['atlasId'];
+    var userId = data['userId'];
+    var userHash = data['userHash'];
+
+    if (atlasId == null || atlasId is! String) {
+      _triggerErrorHandlers(AtlasError("AtlasSupportSDK: Missing or invalid atlasId in identity data"), onError);
+      return null;
+    }
+
+    if (userId == null || userId is! String) {
+      _triggerErrorHandlers(AtlasError("AtlasSupportSDK: Missing or invalid userId in identity data"), onError);
+      return null;
+    }
+
+    if (userHash != null && userHash is! String) {
+      _triggerErrorHandlers(AtlasError("AtlasSupportSDK: Invalid userHash type in identity data"), onError);
+      return null;
+    }
+
+    return {
+      'atlasId': atlasId,
+      'userId': userId,
+      'userHash': userHash,
+    };
+  }
 
   static _triggerErrorHandlers(AtlasError error, [AtlasErrorHandler? customHandler]) {
     var handlers = customHandler != null ? [customHandler, ..._errorHandlers] : _errorHandlers;
@@ -127,8 +192,7 @@ class AtlasSDK {
     }
   }
 
-  static _triggerChangeIdentityHandlers(AtlasChangeIdentity? changeIdentity,
-      [AtlasChangeIdentityHandler? customHandler]) {
+  static _triggerChangeIdentityHandlers(AtlasChangeIdentity? changeIdentity, [AtlasChangeIdentityHandler? customHandler]) {
     _controllers.clear();
     var handlers = customHandler != null ? [customHandler, ..._changeIdentityHandlers] : _changeIdentityHandlers;
     for (var handler in handlers) {
@@ -144,62 +208,44 @@ class AtlasSDK {
     if (_appId == appId) return;
 
     _appId = appId;
-    _atlasId = null;
+    _identity = null;
 
     try {
       final preferences = await SharedPreferences.getInstance();
-      String? atlasId = preferences.getString(_storageAtlasId(appId));
-      String? userDataStr = preferences.getString(_storageUserData(appId));
+      String? identityJson = preferences.getString(_storageIdentityKey(appId));
 
-      // If user was authenticated while settings were loading, we assume that SDK was already reloaded
-      if (_atlasId == null) {
-        if (atlasId != null) {
-          _atlasId = atlasId;
-          if (userDataStr != null) {
-            try {
-              _lastIdentifiedUser = Map<String, dynamic>.from(jsonDecode(userDataStr));
-            } catch (e) {
-              _log("AtlasSupportSDK: Failed to parse stored user data");
-              _lastIdentifiedUser = null;
-            }
+      if (identityJson != null) {
+        try {
+          var identityData = jsonDecode(identityJson);
+          _identity = AtlasIdentity.fromJson(identityData);
+          var identity = _identity;
+          if (identity != null) {
+            _triggerChangeIdentityHandlers(AtlasChangeIdentity(identity.atlasId, identity.userId));
           }
-          _triggerChangeIdentityHandlers(AtlasChangeIdentity(atlasId));
+        } catch (e) {
+          _log("AtlasSupportSDK: Failed to parse stored identity data");
         }
       }
     } catch (error) {
       _triggerChangeIdentityHandlers(null);
-      _triggerErrorHandlers(AtlasError("AtlasSupportSDK: Failed to set Atlas ID", error));
-      _lastIdentifiedUser = null;
+      _triggerErrorHandlers(AtlasError("AtlasSupportSDK: Failed to set App ID", error));
     }
   }
 
-  static Future<void> _setAtlasId(String atlasId, AtlasChangeIdentityHandler? onChange) async {
+  static Future<void> _setAtlasIdentity(AtlasIdentity identity, AtlasChangeIdentityHandler? onChange) async {
     var appId = _appId;
     if (appId == null || appId == "") {
-      var errorMessage = "AtlasSupportSDK: Cannot change Atlas ID without App ID set";
+      var errorMessage = "AtlasSupportSDK: Cannot change identity without App ID set";
       _triggerErrorHandlers(AtlasError(errorMessage));
       throw Exception(errorMessage);
     }
 
-    if (_atlasId == atlasId) return;
+    if (_identity?.atlasId == identity.atlasId && _identity?.userId == identity.userId) return;
 
     final SharedPreferences preferences = await SharedPreferences.getInstance();
-    await preferences.setString(_storageAtlasId(appId), atlasId);
-    _atlasId = atlasId;
-
-    _triggerChangeIdentityHandlers(AtlasChangeIdentity(atlasId), onChange);
-  }
-
-  static Future<void> _storeUserData(String appId, Map<String, dynamic> userData) async {
-    try {
-      final preferences = await SharedPreferences.getInstance();
-      await preferences.setString(_storageUserData(appId), jsonEncode(userData));
-      _lastIdentifiedUser = userData;
-    } catch (error) {
-      _log("AtlasSupportSDK: Failed to store user data");
-      _log(error);
-      _lastIdentifiedUser = null;
-    }
+    _identity = identity;
+    await preferences.setString(_storageIdentityKey(appId), jsonEncode(identity.toJson()));
+    _triggerChangeIdentityHandlers(AtlasChangeIdentity(identity.atlasId, identity.userId), onChange);
   }
 
   static Future<void> logout() async {
@@ -207,15 +253,13 @@ class AtlasSDK {
     if (appId != null) {
       try {
         final preferences = await SharedPreferences.getInstance();
-        await preferences.remove(_storageAtlasId(appId));
-        await preferences.remove(_storageUserData(appId));
+        await preferences.remove(_storageIdentityKey(appId));
       } catch (error) {
         _log("AtlasSupportSDK: Failed to clear stored data");
         _log(error);
       }
     }
-    _atlasId = null;
-    _lastIdentifiedUser = null;
+    _identity = null;
     _triggerChangeIdentityHandlers(null);
   }
 
@@ -244,17 +288,8 @@ class AtlasSDK {
     }
 
     // Check if user data has changed
-    final newUserData = {
-      'userId': userId,
-      'userHash': userHash,
-      'name': name,
-      'email': email,
-      'phoneNumber': phoneNumber,
-      'customFields': customFields,
-    };
+    bool hasChanged = _identity == null || _identity!.userId != userId || _identity!.userHash != userHash;
 
-    // Deep compare maps and lists in custom fields
-    bool hasChanged = _lastIdentifiedUser == null || !_areMapsEqual(_lastIdentifiedUser, newUserData);
     if (!hasChanged) return;
 
     return login(
@@ -273,11 +308,14 @@ class AtlasSDK {
         throw Exception(errorMessage);
       }
 
-      // Store the new user data after successful login
-      await _storeUserData(appId, newUserData);
-
-      if (_atlasId != atlasId) {
-        await _setAtlasId(atlasId, onChange);
+      if (_identity?.atlasId != atlasId) {
+        await _setAtlasIdentity(
+            AtlasIdentity(
+              atlasId: atlasId,
+              userId: userId,
+              userHash: userHash,
+            ),
+            onChange);
       }
     }).catchError((error) {
       var errorMessage = "AtlasSupportSDK: Failed to identify user";
@@ -295,16 +333,14 @@ class AtlasSDK {
       throw Exception(errorMessage);
     }
 
-    var atlasId = _atlasId;
+    var atlasId = _identity?.atlasId;
     if (atlasId == null || atlasId == "") {
       var errorMessage = "AtlasSupportSDK: Cannot call updateCustomFields() without Atlas ID set";
       _triggerErrorHandlers(AtlasError(errorMessage));
       throw Exception(errorMessage);
     }
 
-    // Get and validate userId from last identified user data
-    var userIdValue = _lastIdentifiedUser?['userId'];
-    if (userIdValue == null || userIdValue is! String) {
+    if (_identity == null) {
       var errorMessage = "AtlasSupportSDK: Cannot call updateCustomFields() while not authenticated";
       _triggerErrorHandlers(AtlasError(errorMessage));
       throw Exception(errorMessage);
@@ -318,19 +354,7 @@ class AtlasSDK {
       throw Exception(errorMessage);
     }
 
-    // Get and validate userHash from last identified user data
-    var userHashValue = _lastIdentifiedUser?['userHash'];
-    String? userHash;
-    if (userHashValue != null) {
-      if (userHashValue is! String) {
-        var errorMessage =
-            "AtlasSupportSDK: Invalid userHash type. Expected String or null, got ${userHashValue.runtimeType}";
-        _triggerErrorHandlers(AtlasError(errorMessage));
-        throw Exception(errorMessage);
-      }
-      userHash = userHashValue;
-    }
-    await updateAtlasCustomFields(atlasId, ticketId, customFields, userHash: userHash);
+    await updateAtlasCustomFields(atlasId, ticketId, customFields, userHash: _identity!.userHash);
   }
 
   static watchStats(AtlasWatcherStatsChangeHandler callback, [AtlasWatcherErrorHandler? onError]) {
@@ -341,12 +365,10 @@ class AtlasSDK {
       throw Exception(errorMessage);
     }
 
-    var atlasId = _atlasId;
-
     // Unsubscribe if any and reset itself to prevent duplicate call to unsubscribe
     Function? dispose;
 
-    void subscribe(String atlasId) {
+    void subscribe(AtlasIdentity identity) {
       Function? unsubscribe;
 
       dispose?.call();
@@ -357,18 +379,24 @@ class AtlasSDK {
 
       unsubscribe = watchAtlasSupportStats(
           appId: appId,
-          atlasId: atlasId,
+          atlasId: identity.atlasId,
+          userId: identity.userId,
+          userHash: identity.userHash,
           onStatsChange: callback,
           onError: (error) =>
               _triggerErrorHandlers(AtlasError("AtlasSupportSDK: WebSocket thrown an error", error), onError));
     }
 
-    if (atlasId != null) subscribe(atlasId);
+    var identity = _identity;
+    if (identity != null) subscribe(identity);
 
-    void restart(AtlasChangeIdentity? identity) {
+    void restart(AtlasChangeIdentity? changeIdentity) {
       dispose?.call();
       callback(AtlasConversationsStats(conversations: []));
-      if (identity != null) subscribe(identity.atlasId);
+      var identity = _identity;
+      if (identity != null && identity.atlasId == changeIdentity?.atlasId && identity.userId == changeIdentity?.userId) {
+        subscribe(identity);
+      }
     }
 
     onChangeIdentity(restart);
@@ -391,51 +419,41 @@ class AtlasSDK {
       throw Exception(errorMessage);
     }
 
-    // Get userId and userHash from last identified user data
-    String? userId;
-    String? userHash;
-    if (_lastIdentifiedUser != null) {
-      userId = _lastIdentifiedUser!['userId'] as String?;
-      userHash = _lastIdentifiedUser!['userHash'] as String?;
-    }
-
     return DynamicAtlasSupportWidget(
       appId: appId,
       query: query,
-      initialUserId: userId,
-      initialUserHash: userHash,
+      initialUserId: _identity?.userId,
+      initialUserHash: _identity?.userHash,
       onError: (error) {
         _triggerErrorHandlers(AtlasError("AtlasSupportSDK: Widget reported error", error), onError);
       },
-      onChatStarted: (Map<String, dynamic> data) {
-        var ticketId = data['ticketId'];
-        var chatbotKey = data['chatbotKey'];
-        if (ticketId is String) {
-          var chatStarted = AtlasChatStarted(ticketId, chatbotKey);
-          _triggerChatStartedHandlers(chatStarted, onChatStarted);
-        } else {
-          _triggerErrorHandlers(AtlasError("AtlasSupportSDK: Received invalid chat data ($data)"), onError);
-        }
-      },
-      onNewTicket: (Map<String, dynamic> data) {
-        var ticketId = data['ticketId'];
-        var chatbotKey = data['chatbotKey'];
-        if (ticketId is String) {
-          var newTicket = AtlasNewTicket(ticketId, chatbotKey);
-          _triggerNewTicketHandlers(newTicket, onNewTicket);
-        } else {
-          _triggerErrorHandlers(AtlasError("AtlasSupportSDK: Received invalid ticket data ($data)"), onError);
-        }
-      },
-      onChangeIdentity: (Map<String, dynamic> data) {
-        var atlasId = data['atlasId'];
-        if (_atlasId == atlasId) return;
+      onChatStarted: (dynamic data) {
+        var validatedData = _validateNewTicketData(data, onError);
+        if (validatedData == null) return;
 
-        if (atlasId is String) {
-          _setAtlasId(atlasId, onChangeIdentity);
-        } else {
-          _triggerErrorHandlers(AtlasError("AtlasSupportSDK: Received invalid change identity data ($data)"), onError);
-        }
+        var chatStarted = AtlasChatStarted(validatedData['ticketId'], validatedData['chatbotKey']);
+        _triggerChatStartedHandlers(chatStarted, onChatStarted);
+      },
+      onNewTicket: (dynamic data) {
+        var validatedData = _validateNewTicketData(data, onError);
+        if (validatedData == null) return;
+
+        var newTicket = AtlasNewTicket(validatedData['ticketId'], validatedData['chatbotKey']);
+        _triggerNewTicketHandlers(newTicket, onNewTicket);
+      },
+      onChangeIdentity: (dynamic data) {
+        var validatedData = _validateIdentityData(data, onError);
+        if (validatedData == null) return;
+
+        var atlasId = validatedData['atlasId'];
+        if (_identity?.atlasId == atlasId) return;
+
+        _identity = AtlasIdentity(
+          atlasId: atlasId,
+          userId: validatedData['userId'],
+          userHash: validatedData['userHash'],
+        );
+        _setAtlasIdentity(_identity!, onChangeIdentity);
       },
       controller: persist != null ? _controllers[persist] : null,
       onNewController: persist != null

@@ -6,25 +6,14 @@ import 'models/product.dart';
 import 'services/wordpress_service.dart';
 import 'screens/product_details_screen.dart';
 import 'screens/cart_screen.dart';
+import 'screens/settings_screen.dart';
 
-const appId = String.fromEnvironment('ATLAS_APP_ID', defaultValue: '7wukb9ywp9');
-
-class DemoUser {
-  final String atlasId;
-  final String userId;
-  final String userHash;
-  DemoUser(this.atlasId, this.userId, this.userHash);
-}
-
-var userAdam = DemoUser(
-    '86427437-8d4e-425c-bae1-109cf7ecbfc5', 'adam', '28af9d7e2fe67562e0b3dc0e4df9ae070be4a286f28fed8bd9eb555b68feb399');
-var userSara = DemoUser(
-    '4ae4ee1b-5925-4059-9932-16cdf60d5ba9', 'sara', 'edceaca5418b1e3bf339af13460236dbae40a335a2d1b8148681adaa2cc5753e');
+const _appId = String.fromEnvironment('ATLAS_APP_ID', defaultValue: '7wukb9ywp9');
 
 void main() {
   runApp(const MyApp());
 
-  AtlasSDK.setAppId(appId);
+  AtlasSDK.setAppId(_appId);
 }
 
 class MyApp extends StatelessWidget {
@@ -38,38 +27,35 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Kokiri'),
+      home: const _MyHomePage(title: 'Kokiri'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+class _MyHomePage extends StatefulWidget {
+  const _MyHomePage({super.key, required this.title});
 
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<_MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
-  int _unreadCount = 0;
+class _MyHomePageState extends State<_MyHomePage> with TickerProviderStateMixin {
   Function? _dispose;
+
+  int _unreadCount = 0;
   final _wordPressService = WordPressService();
   final List<Product> _products = [];
   final List<Product> _cartItems = [];
+
   bool _isLoading = false;
   int _currentPage = 1;
   bool _hasMoreProducts = true;
-  final ScrollController _scrollController = ScrollController();
   String? _error;
-  late TabController _tabController;
 
-  final TextEditingController _userIdController = TextEditingController();
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _phoneNumberController = TextEditingController();
-  final TextEditingController _titleController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  late TabController _tabController;
 
   @override
   void initState() {
@@ -82,25 +68,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
     var disposeErrorHandler = AtlasSDK.onError((error) {
       print("onError(${error.message}${error.original != null ? ', ${error.original}' : ''})");
-    });
-
-    // Track identity changes
-
-    var atlasId = AtlasSDK.getAtlasId();
-    if (atlasId != null) _userIdController.text = atlasId;
-
-    var disposeChangeIdentityHandler = AtlasSDK.onChangeIdentity((identity) {
-      if (identity == null) {
-        _userIdController.text = '';
-        print("onChangeIdentity(null)");
-      } else {
-        _userIdController.text = identity.atlasId == userAdam.atlasId
-            ? userAdam.userId
-            : identity.atlasId == userSara.atlasId
-                ? userSara.userId
-                : '';
-        print("onChangeIdentity({atlasId: ${identity.atlasId}})");
-      }
     });
 
     // Track conversations stats
@@ -124,7 +91,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
     _dispose = () {
       disposeErrorHandler();
-      disposeChangeIdentityHandler();
       disposeStatsHandler();
       disposeChatStartedHandler();
       disposeNewTicketHandler();
@@ -134,8 +100,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   @override
   void dispose() {
     _scrollController.dispose();
-    _dispose?.call();
     _tabController.dispose();
+    _dispose?.call();
     super.dispose();
   }
 
@@ -286,135 +252,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => Scaffold(
-                    appBar: AppBar(
-                      title: const Text('Settings'),
-                    ),
-                    body: SafeArea(
-                      child: Padding(
-                        padding: const EdgeInsets.all(20.0),
-                        child: Column(
-                          children: <Widget>[
-                            RadioListTile(
-                              title: Text('User ID: "${userAdam.userId}"'),
-                              value: userAdam.userId,
-                              groupValue: _userIdController.text,
-                              onChanged: (value) {
-                                setState(() {
-                                  _userIdController.text = value as String;
-                                });
-                              },
-                            ),
-                            RadioListTile(
-                              title: Text('User ID: "${userSara.userId}"'),
-                              value: userSara.userId,
-                              groupValue: _userIdController.text,
-                              onChanged: (value) {
-                                setState(() {
-                                  _userIdController.text = value as String;
-                                });
-                              },
-                            ),
-                            const SizedBox(height: 10),
-                            TextField(
-                              decoration: const InputDecoration(
-                                labelText: 'Name',
-                                border: OutlineInputBorder(),
-                              ),
-                              controller: _nameController,
-                            ),
-                            const SizedBox(height: 10),
-                            TextField(
-                              decoration: const InputDecoration(
-                                labelText: 'Email',
-                                border: OutlineInputBorder(),
-                              ),
-                              controller: _emailController,
-                            ),
-                            const SizedBox(height: 10),
-                            TextField(
-                              decoration: const InputDecoration(
-                                labelText: 'Phone Number',
-                                border: OutlineInputBorder(),
-                              ),
-                              controller: _phoneNumberController,
-                            ),
-                            const SizedBox(height: 10),
-                            TextField(
-                              decoration: const InputDecoration(
-                                labelText: 'Title',
-                                border: OutlineInputBorder(),
-                              ),
-                              controller: _titleController,
-                            ),
-                            const SizedBox(height: 20),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                ElevatedButton(
-                                  onPressed: () {
-                                    final userId = _userIdController.text;
-                                    final name = _nameController.text;
-                                    final email = _emailController.text;
-                                    final phoneNumber = _phoneNumberController.text;
-                                    final title = _titleController.text;
-                                    AtlasSDK.identify(
-                                      userId: userId,
-                                      userHash: userId == userAdam.userId
-                                          ? userAdam.userHash
-                                          : userId == userSara.userId
-                                              ? userSara.userHash
-                                              : null,
-                                      name: name.trim() != "" ? name : null,
-                                      email: email.trim() != "" ? email : null,
-                                      phoneNumber: phoneNumber.trim() != "" ? phoneNumber : null,
-                                      customFields: {
-                                        if (title.trim() != "") 'title': title,
-                                      },
-                                    );
-                                  },
-                                  child: const Text('Identify'),
-                                ),
-                                const ElevatedButton(
-                                  onPressed: AtlasSDK.logout,
-                                  child: const Text('Logout'),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                showModalBottomSheet(
-                                  context: context,
-                                  isScrollControlled: true,
-                                  enableDrag: false,
-                                  showDragHandle: true,
-                                  builder: (BuildContext context) {
-                                    return SizedBox(
-                                      height: MediaQuery.of(context).size.height * 0.82,
-                                      child: SafeArea(
-                                        child: Scaffold(
-                                          body: AtlasSDK.Widget(
-                                            persist: "settings-help-center",
-                                            query: 'open: helpcenter'
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                );
-                              },
-                              icon: const Icon(Icons.help),
-                              label: const Text('Help Center'),
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                  builder: (context) => const SettingsScreen(),
                 ),
               );
             },
@@ -445,14 +283,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Products',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
                   if (_error != null)
                     Card(
                       color: Colors.red[100],

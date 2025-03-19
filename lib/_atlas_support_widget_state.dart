@@ -78,11 +78,11 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
         if (message['type'] == 'atlas:error') {
           widget.onError?.call('AtlasSupportWidget: ${message['errorMessage']}');
         } else if (message['type'] == 'atlas:chatStarted') {
-          widget.onChatStarted?.call({'ticketId': message['ticketId'], 'chatbotKey': message['chatbotKey']});
+          widget.onChatStarted?.call(message);
         } else if (message['type'] == 'atlas:newTicket') {
-          widget.onNewTicket?.call({'ticketId': message['ticketId'], 'chatbotKey': message['chatbotKey']});
+          widget.onNewTicket?.call(message);
         } else if (message['type'] == 'atlas:changeIdentity') {
-          widget.onChangeIdentity?.call({'atlasId': message['atlasId']});
+          widget.onChangeIdentity?.call(message);
         }
       } catch (e) {
         widget.onError?.call('AtlasSupportWidget: ${package.message}');

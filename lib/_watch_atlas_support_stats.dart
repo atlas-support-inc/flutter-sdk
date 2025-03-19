@@ -29,6 +29,8 @@ Function watchAtlasSupportStats(
     {required String appId,
     required String atlasId,
     required AtlasWatcherStatsChangeHandler onStatsChange,
+    String? userId,
+    String? userHash,
     AtlasWatcherErrorHandler? onError}) {
   Function? unsubscribe;
 
@@ -48,7 +50,10 @@ Function watchAtlasSupportStats(
   }
 
   unsubscribe = connectCustomer(
+      appId: appId,
       atlasId: atlasId,
+      userId: userId,
+      userHash: userHash,
       onError: onError,
       onMessage: (packet) {
         try {

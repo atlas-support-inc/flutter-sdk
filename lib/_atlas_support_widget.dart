@@ -5,13 +5,13 @@ import 'package:flutter/material.dart';
 import '_atlas_support_widget_state.dart';
 
 typedef AtlasWidgetChatStartedHandler = void Function(
-    Map<String, dynamic> ticket); // {String ticketId, String? chatbotKey}
+    dynamic ticket); // {String ticketId, String? chatbotKey}
 
 typedef AtlasWidgetNewTicketHandler = void Function(
-    Map<String, dynamic> ticket); // {String ticketId}
+    dynamic ticket); // {String ticketId}
 
 typedef AtlasWidgetChangeIdentityHandler = void Function(
-    Map<String, dynamic> ticket); // {String atlasId}
+    dynamic ticket); // {String atlasId}
 
 typedef AtlasWidgetErrorHandler = void Function(dynamic message);
 
