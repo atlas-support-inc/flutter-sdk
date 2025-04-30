@@ -13,6 +13,12 @@ dependencies:
 
 ## Setup
 
+To use it with Android you need to ensure that internet access is enabled in `AndroidManifest.xml`:
+
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
+```
+
 Import the package into your code:
 
 ```dart
@@ -52,13 +58,6 @@ Optional parameters like `name`, `email`, or `phoneNumber` should be set to null
 
 When you want to update the user's details, you can call `identify` method again.
 
-### Check User Identity
-You can check the current Atlas ID at any time:
-
-```dart
-String? currentAtlasId = AtlasSDK.getAtlasId();
-```
-
 ### Logout
 To clear the user's session when they log out of your application, use:
 
@@ -94,14 +93,14 @@ To maintain chat state across widget rebuilds, use the `persist` parameter:
 
 ```dart
 AtlasSDK.Widget(
-  persist: "unique_key",  // Controllers are stored by this key
+  persist: "unique_key", // Controllers are stored by this key
   query: "chatbotKey: support"
 )
 ```
 
 ## Event Handling
 
-### Error Handling
+### Errors
 The SDK provides detailed error information through the `AtlasError` class:
 
 ```dart
@@ -160,7 +159,6 @@ dispose();
 
 ## Ticket Management
 
-### Custom Fields
 You can update custom fields for a specific ticket after it's created:
 
 ```dart
@@ -174,7 +172,7 @@ AtlasSDK.updateCustomFields(
 );
 ```
 
-#### Custom Field Types
+## Custom Field Types
 The SDK supports various custom field types. Here's how to properly format each type:
 
 ```dart
@@ -229,7 +227,6 @@ The SDK supports various custom field types. Here's how to properly format each 
 
 ## Data Management
 
-### Storage and Persistence
 The SDK automatically handles:
 - Persistent storage of user identification
 - Chat session management
@@ -245,7 +242,7 @@ All data is securely stored using the device's SharedPreferences.
 
 ## Support
 
-For issues or feature requests, contact the engineering team at [engineering@getatlas.io](mailto:engineering@getatlas.io) or visit our [GitHub Issues](https://github.com/atlas-support-inc/flutter-sdk/issues) page.
+For issues or feature requests, contact the engineering team at [engineering@atlas.so](mailto:engineering@atlas.so) or visit our [GitHub Issues](https://github.com/atlas-support-inc/flutter-sdk/issues) page.
 
 For more details, visit the official [Atlas Support website](https://atlas.so).
 
