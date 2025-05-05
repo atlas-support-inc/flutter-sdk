@@ -89,7 +89,12 @@ class _MyHomePageState extends State<_MyHomePage> with TickerProviderStateMixin 
           "onNewTicket(ticketId: ${newTicket.ticketId}${newTicket.chatbotKey != null ? ', chatbotKey: ${newTicket.chatbotKey}' : ''})");
     });
 
+    var disposeNewTicket = AtlasSDK.onNewTicket((ticket) {
+      print("🎫 ${ticket.ticketId}");
+    });
+
     _dispose = () {
+      disposeNewTicket();
       disposeErrorHandler();
       disposeStatsHandler();
       disposeChatStartedHandler();

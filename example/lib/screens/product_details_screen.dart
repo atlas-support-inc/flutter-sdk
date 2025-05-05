@@ -302,7 +302,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                         body: AtlasSDK.Widget(
                                           query: "chatbotKey: product_details; prefer: new",
                                           onNewTicket: (chatStarted) {
-                                            AtlasSDK().updateCustomFields(
+                                            AtlasSDK.updateCustomFields(
                                               chatStarted.ticketId,
                                               {
                                                 'product_link': {'url': product.link, 'title': product.name}

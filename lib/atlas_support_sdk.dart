@@ -323,7 +323,7 @@ class AtlasSDK {
     });
   }
 
-  Future<void> updateCustomFields(String ticketId, Map<String, dynamic> customFields) async {
+  static Future<void> updateCustomFields(String ticketId, Map<String, dynamic> customFields) async {
     var appId = _appId;
     if (appId == null || appId == "") {
       var errorMessage = "AtlasSupportSDK: Cannot call updateCustomFields() without App ID set";
