@@ -1,16 +1,21 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+
 import '_config.dart';
 
-const loginUrl = "$atlasApiBaseUrl/client-app/company/identify";
+const _loginUrl = "$atlasApiBaseUrl/client-app/company/identify";
+
+typedef AtlasCustomFields = Map<String, dynamic>;
 
 Future login(
     {required String appId,
     required String userId,
     String? userHash,
-    String? userName,
-    String? userEmail}) {
-  var uri = Uri.parse(loginUrl);
+    String? name,
+    String? email,
+    String? phoneNumber,
+    AtlasCustomFields? customFields}) {
+  var uri = Uri.parse(_loginUrl);
 
   return http
       .post(uri,
@@ -19,8 +24,10 @@ Future login(
             'appId': appId,
             'userId': userId,
             ...(userHash == null ? {} : {'userHash': userHash}),
-            ...(userName == null ? {} : {'name': userName}),
-            ...(userEmail == null ? {} : {'email': userEmail}),
+            ...(name == null ? {} : {'name': name}),
+            ...(email == null ? {} : {'email': email}),
+            ...(phoneNumber == null ? {} : {'phoneNumber': phoneNumber}),
+            ...(customFields == null ? {} : {'customFields': customFields}),
           }))
       .then(
     (response) {
@@ -33,16 +40,12 @@ Future login(
       try {
         var body = jsonDecode(text);
         var errorMessage =
-          body is Map &&
-          body.containsKey('detail') &&
-          body['detail'] is String
-            ? body['detail']
-            : jsonEncode(body);
+            body is Map && body.containsKey('detail') && body['detail'] is String ? body['detail'] : jsonEncode(body);
 
         throw Exception("Login failed: $errorMessage");
-      } catch (err) {}
-
-      throw Exception("Login failed: HTTP(${response.statusCode}) $text");
+      } catch (err) {
+        throw Exception("Login failed: HTTP(${response.statusCode}) $text");
+      }
     },
   );
 }

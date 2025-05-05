@@ -7,8 +7,8 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
-import 'atlas_support_widget.dart';
 import '_config.dart';
+import '_atlas_support_widget.dart';
 import '_get_package_version.dart';
 
 class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
@@ -24,10 +24,10 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
   @override
   void didUpdateWidget(AtlasSupportWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    var hasChanged = widget.userId != oldWidget.userId ||
+    var hasChanged = widget.appId != oldWidget.appId ||
+        widget.userId != oldWidget.userId ||
         widget.userHash != oldWidget.userHash ||
-        widget.userName != oldWidget.userName ||
-        widget.userEmail != oldWidget.userEmail;
+        widget.query != oldWidget.query;
     if (hasChanged) {
       _loadPage(_controller);
     }
@@ -35,6 +35,8 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
 
   @override
   void dispose() {
+    _controller.clearCache();
+    _controller.setJavaScriptMode(JavaScriptMode.disabled);
     super.dispose();
   }
 
@@ -48,11 +50,8 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
       'sdkVersion': 'flutter@${await getPackageVersion()}',
       'appId': widget.appId,
       ...widget.query == null || widget.query == "" ? {} : {'query': widget.query!.replaceAll(RegExp(r'\s'), '')},
-      ...widget.atlasId == null || widget.atlasId == "" ? {} : {'atlasId': widget.atlasId},
       ...widget.userId == null || widget.userId == "" ? {} : {'userId': widget.userId},
       ...widget.userHash == null || widget.userHash == "" ? {} : {'userHash': widget.userHash},
-      ...widget.userName == null || widget.userName == "" ? {} : {'userName': widget.userName},
-      ...widget.userEmail == null || widget.userEmail == "" ? {} : {'userEmail': widget.userEmail},
     });
     controller.loadRequest(url);
   }
@@ -73,15 +72,17 @@ class AtlasSupportWidgetState extends State<AtlasSupportWidget> {
     controller.setJavaScriptMode(JavaScriptMode.unrestricted);
     _loadPage(controller);
 
-    controller.addJavaScriptChannel("FlutterWebView", onMessageReceived: (package) {
+    controller.addJavaScriptChannel("atlasMessageHandler", onMessageReceived: (package) {
       try {
         final message = (jsonDecode(package.message) as Map<String, dynamic>);
         if (message['type'] == 'atlas:error') {
           widget.onError?.call('AtlasSupportWidget: ${message['errorMessage']}');
+        } else if (message['type'] == 'atlas:chatStarted') {
+          widget.onChatStarted?.call(message);
         } else if (message['type'] == 'atlas:newTicket') {
-          widget.onNewTicket?.call({'ticketId': message['ticketId']});
+          widget.onNewTicket?.call(message);
         } else if (message['type'] == 'atlas:changeIdentity') {
-          widget.onChangeIdentity?.call({'atlasId': message['atlasId']});
+          widget.onChangeIdentity?.call(message);
         }
       } catch (e) {
         widget.onError?.call('AtlasSupportWidget: ${package.message}');

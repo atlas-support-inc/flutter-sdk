@@ -7,30 +7,21 @@ import '_dynamic_atlas_support_widget.dart';
 
 class DynamicAtlasSupportWidgetState extends State<DynamicAtlasSupportWidget> {
   String? _query;
-  String? _atlasId;
   String? _userId;
   String? _userHash;
-  String? _userName;
-  String? _userEmail;
   Function? _destroyNotifier;
 
   @override
   void initState() {
     super.initState();
     _query = widget.query;
-    _atlasId = widget.initialAtlasId;
     _userId = widget.initialUserId;
     _userHash = widget.initialUserHash;
-    _userName = widget.initialUserName;
-    _userEmail = widget.initialUserEmail;
 
     _destroyNotifier = widget.registerIdentityChangeListener((newIdentity) {
       setState(() {
-        _atlasId = newIdentity['atlasId'];
         _userId = newIdentity['userId'];
         _userHash = newIdentity['userHash'];
-        _userName = newIdentity['userName'];
-        _userEmail = newIdentity['userEmail'];
       });
     });
   }
@@ -46,12 +37,10 @@ class DynamicAtlasSupportWidgetState extends State<DynamicAtlasSupportWidget> {
     return AtlasSupportControllableWidget(
         appId: widget.appId,
         query: _query,
-        atlasId: _atlasId,
         userId: _userId,
         userHash: _userHash,
-        userName: _userName,
-        userEmail: _userEmail,
         onError: widget.onError,
+        onChatStarted: widget.onChatStarted,
         onNewTicket: widget.onNewTicket,
         onChangeIdentity: widget.onChangeIdentity,
         controller: widget.controller,

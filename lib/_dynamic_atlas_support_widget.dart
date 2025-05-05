@@ -2,19 +2,18 @@ library atlas_support_sdk;
 
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+
 import '_dynamic_atlas_support_widget_state.dart';
-import 'atlas_support_widget.dart';
+import '_atlas_support_widget.dart';
 
 class DynamicAtlasSupportWidget extends StatefulWidget {
   final String appId;
   final String? query;
-  final String? initialAtlasId;
   final String? initialUserId;
   final String? initialUserHash;
-  final String? initialUserName;
-  final String? initialUserEmail;
   final Function registerIdentityChangeListener;
   final AtlasWidgetErrorHandler? onError;
+  final AtlasWidgetChatStartedHandler? onChatStarted;
   final AtlasWidgetNewTicketHandler? onNewTicket;
   final AtlasWidgetChangeIdentityHandler? onChangeIdentity;
   final WebViewController? controller;
@@ -24,12 +23,10 @@ class DynamicAtlasSupportWidget extends StatefulWidget {
       {Key? key,
       required this.appId,
       this.query,
-      this.initialAtlasId,
       this.initialUserId,
       this.initialUserHash,
-      this.initialUserName,
-      this.initialUserEmail,
       this.onError,
+      this.onChatStarted,
       this.onNewTicket,
       this.onChangeIdentity,
       this.controller,

@@ -2,137 +2,346 @@
 
 import 'package:atlas_support_sdk/atlas_support_sdk.dart';
 import 'package:flutter/material.dart';
-import 'package:badges/badges.dart' as badges;
-import 'test_users.dart';
+import 'models/product.dart';
+import 'services/wordpress_service.dart';
+import 'screens/product_details_screen.dart';
+import 'screens/cart_screen.dart';
+import 'screens/settings_screen.dart';
 
-var firstUser = user;
-var secondUser = userEmpty;
-var currentUser = secondUser;
+const _appId = String.fromEnvironment('ATLAS_APP_ID', defaultValue: '7wukb9ywp9');
 
 void main() {
   runApp(const MyApp());
+
+  AtlasSDK.setAppId(_appId);
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
+      title: 'Atlas FlutterSDK',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const _MyHomePage(title: 'Kokiri'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+class _MyHomePage extends StatefulWidget {
+  const _MyHomePage({super.key, required this.title});
 
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<_MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _MyHomePageState extends State<_MyHomePage> with TickerProviderStateMixin {
+  Function? _dispose;
+
   int _unreadCount = 0;
-  Function? _unsubscribe;
-  AtlasSupportSDK sdk = createAtlasSupportSDK(
-    appId: appId,
-    userId: currentUser['id'],
-    userHash: currentUser['hash'],
-    onError: (error) => print("onError($error)"),
-    onNewTicket: (data) => print("onNewTicket($data)"),
-    onChangeIdentity: (identity) => print("onChangeIdentity($identity)"),
-  );
+  final _wordPressService = WordPressService();
+  final List<Product> _products = [];
+  final List<Product> _cartItems = [];
+
+  bool _isLoading = false;
+  int _currentPage = 1;
+  bool _hasMoreProducts = true;
+  String? _error;
+
+  final ScrollController _scrollController = ScrollController();
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _unsubscribe = sdk.watchStats((stats) {
+    _loadProducts();
+    _scrollController.addListener(_onScroll);
+    _tabController = TabController(length: 3, vsync: this);
+
+    // Log all Atlas errors
+
+    var disposeErrorHandler = AtlasSDK.onError((error) {
+      print("onError(${error.message}${error.original != null ? ', ${error.original}' : ''})");
+    });
+
+    // Track conversations stats
+
+    var disposeStatsHandler = AtlasSDK.watchStats((stats) {
       setState(() {
-        _unreadCount = stats.conversations
-            .fold(0, (sum, conversation) => sum + conversation.unread);
+        _unreadCount = stats.conversations.fold(0, (sum, conversation) => sum + conversation.unread);
       });
     });
+
+    // Watch for new conversations
+
+    var disposeChatStartedHandler = AtlasSDK.onChatStarted((chatStarted) {
+      print(
+          "onChatStarted(ticketId: ${chatStarted.ticketId}${chatStarted.chatbotKey != null ? ', chatbotKey: ${chatStarted.chatbotKey}' : ''})");
+    });
+    var disposeNewTicketHandler = AtlasSDK.onNewTicket((newTicket) {
+      print(
+          "onNewTicket(ticketId: ${newTicket.ticketId}${newTicket.chatbotKey != null ? ', chatbotKey: ${newTicket.chatbotKey}' : ''})");
+    });
+
+    _dispose = () {
+      disposeErrorHandler();
+      disposeStatsHandler();
+      disposeChatStartedHandler();
+      disposeNewTicketHandler();
+    };
   }
 
   @override
   void dispose() {
-    _unsubscribe?.call();
+    _scrollController.dispose();
+    _tabController.dispose();
+    _dispose?.call();
     super.dispose();
   }
 
-  void _incrementCounter() {
+  Future<void> _loadProducts() async {
+    if (_isLoading || !_hasMoreProducts) return;
+
     setState(() {
-      _counter++;
+      _isLoading = true;
+      _error = null;
     });
+
+    try {
+      final newProducts = await _wordPressService.getProducts(page: _currentPage);
+
+      setState(() {
+        _products.addAll(newProducts.map((data) => Product.fromJson(data)));
+        _currentPage++;
+        _hasMoreProducts = _currentPage <= _wordPressService.totalPages;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _error = e.toString();
+      });
+    }
+  }
+
+  Future<void> _retryLoading() async {
+    setState(() {
+      _error = null;
+    });
+    await _loadProducts();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent * 0.8) {
+      _loadProducts();
+    }
+  }
+
+  void _updateCartItem(Product product) {
+    setState(() {
+      final existingProduct = _cartItems.firstWhere(
+        (item) => item.id == product.id,
+        orElse: () => product,
+      );
+
+      if (!_cartItems.contains(existingProduct)) {
+        _cartItems.add(existingProduct);
+      } else {
+        // If the product is already in cart, increase its quantity
+        existingProduct.quantity += product.quantity;
+      }
+      _tabController.animateTo(1);
+    });
+  }
+
+  void _updateCartItemQuantity(Product product, int quantity) {
+    setState(() {
+      if (quantity <= 0) {
+        _cartItems.removeWhere((item) => item.id == product.id);
+        product.quantity = 0;
+      } else {
+        product.quantity = quantity;
+      }
+    });
+  }
+
+  void _removeFromCart(Product product) {
+    setState(() {
+      _cartItems.removeWhere((item) => item.id == product.id);
+      product.quantity = 0;
+    });
+  }
+
+  Widget _buildProductCard(Product product) {
+    return Card(
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProductDetailsScreen(
+                productId: product.id,
+                onCartUpdated: _updateCartItem,
+              ),
+            ),
+          );
+        },
+        child: ListTile(
+          leading: product.imageUrl.isNotEmpty
+              ? SizedBox(
+                  width: 56,
+                  height: 56,
+                  child: Image.network(
+                    product.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: 56,
+                        height: 56,
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.error),
+                      );
+                    },
+                  ),
+                )
+              : Container(
+                  width: 56,
+                  height: 56,
+                  color: Colors.grey[300],
+                  child: const Icon(Icons.image),
+                ),
+          title: Text(product.name),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text('\$${product.price.toStringAsFixed(2)}'),
+                  const SizedBox(width: 8),
+                  Text(
+                    product.isInStock ? 'In Stock' : 'Out of Stock',
+                    style: TextStyle(
+                      color: product.isInStock ? Colors.green : Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title), actions: <Widget>[
-        badges.Badge(
-            showBadge: _unreadCount > 0,
-            badgeContent: Text(_unreadCount.toString()),
-            position: badges.BadgePosition.topEnd(top: 5, end: 5),
-            child: IconButton(
-                icon: const Icon(Icons.help),
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) {
-                    return Scaffold(
-                      appBar: AppBar(
-                        title: const Text('Help'),
-                        actions: <Widget>[
-                          IconButton(
-                              onPressed: () {
-                                currentUser = currentUser == firstUser
-                                    ? secondUser
-                                    : firstUser;
-                                sdk.identify(
-                                    userId: currentUser['id'],
-                                    userHash: currentUser['hash']);
-                              },
-                              icon: const Icon(Icons.refresh))
-                        ],
-                      ),
-                      body: sdk.Widget(
-                        persist: "main",
-                        query: "chatbotKey: embed_test",
-                        onNewTicket: (data) {
-                          sdk.updateCustomFields(
-                              data['ticketId'], {'test': 'flutter-sourced'});
-                        },
-                      ),
-                    );
-                  }));
-                }))
-      ]),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+      appBar: AppBar(
+        title: Text(widget.title),
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SettingsScreen(),
+                ),
+              );
+            },
+          ),
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: [
+            const Tab(icon: Icon(Icons.shopping_basket), text: 'Store'),
+            Tab(
+              icon: const Icon(Icons.shopping_cart),
+              text: _cartItems.isEmpty ? 'Cart' : 'Cart (${_cartItems.fold(0, (sum, item) => sum + item.quantity)})',
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+            Tab(
+              icon: const Icon(Icons.help),
+              text: _unreadCount > 0 ? 'Help ($_unreadCount)' : 'Help',
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          // Store screen
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_error != null)
+                    Card(
+                      color: Colors.red[100],
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          children: [
+                            Text(
+                              _error!,
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                            const SizedBox(height: 8),
+                            ElevatedButton(
+                              onPressed: _retryLoading,
+                              child: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  Expanded(
+                    child: _products.isEmpty && _error == null
+                        ? const Center(child: CircularProgressIndicator())
+                        : ListView.builder(
+                            controller: _scrollController,
+                            itemCount: _products.length + (_hasMoreProducts ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              if (index == _products.length) {
+                                return const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(8.0),
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+                              }
+
+                              return _buildProductCard(_products[index]);
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Cart screen
+          SafeArea(
+            child: CartScreen(
+              cartItems: _cartItems,
+              onQuantityChanged: _updateCartItemQuantity,
+              onRemoveItem: _removeFromCart,
+            ),
+          ),
+          // Help screen
+          SafeArea(
+            child: AtlasSDK.Widget(
+              persist: "main-chat",
+            ),
+          ),
+        ],
       ),
     );
   }

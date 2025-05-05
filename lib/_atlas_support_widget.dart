@@ -1,24 +1,26 @@
 library atlas_support_sdk;
 
 import 'package:flutter/material.dart';
-import 'atlas_support_widget_state.dart';
+
+import '_atlas_support_widget_state.dart';
+
+typedef AtlasWidgetChatStartedHandler = void Function(
+    dynamic ticket); // {String ticketId, String? chatbotKey}
 
 typedef AtlasWidgetNewTicketHandler = void Function(
-    Map<String, dynamic> ticket); // {String ticketId}
+    dynamic ticket); // {String ticketId}
 
 typedef AtlasWidgetChangeIdentityHandler = void Function(
-    Map<String, dynamic> ticket); // {String atlasId}
+    dynamic ticket); // {String atlasId}
 
 typedef AtlasWidgetErrorHandler = void Function(dynamic message);
 
 class AtlasSupportWidget extends StatefulWidget {
   final String appId;
   final String? query;
-  final String? atlasId;
   final String? userId;
   final String? userHash;
-  final String? userName;
-  final String? userEmail;
+  final AtlasWidgetChatStartedHandler? onChatStarted;
   final AtlasWidgetNewTicketHandler? onNewTicket;
   final AtlasWidgetChangeIdentityHandler? onChangeIdentity;
   final AtlasWidgetErrorHandler? onError;
@@ -27,11 +29,9 @@ class AtlasSupportWidget extends StatefulWidget {
       {Key? key,
       required this.appId,
       this.query,
-      this.atlasId,
       this.userId,
       this.userHash,
-      this.userName,
-      this.userEmail,
+      this.onChatStarted,
       this.onNewTicket,
       this.onChangeIdentity,
       this.onError})

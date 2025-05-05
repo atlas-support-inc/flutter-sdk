@@ -1,8 +1,8 @@
 library atlas_support_sdk;
 
-import 'package:atlas_support_sdk/atlas_support_widget_state.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+import '_atlas_support_widget_state.dart';
 import '_atlas_support_controllable_widget.dart';
 
 class AtlasSupportControllableWidgetState extends AtlasSupportWidgetState {
