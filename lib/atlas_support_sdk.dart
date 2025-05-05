@@ -287,11 +287,6 @@ class AtlasSDK {
       throw Exception(errorMessage);
     }
 
-    // Check if user data has changed
-    bool hasChanged = _identity == null || _identity!.userId != userId || _identity!.userHash != userHash;
-
-    if (!hasChanged) return;
-
     return login(
             appId: appId,
             userId: userId,
@@ -308,7 +303,10 @@ class AtlasSDK {
         throw Exception(errorMessage);
       }
 
-      if (_identity?.atlasId != atlasId) {
+      // Check if user identity was switched
+      bool hasSwitched = _identity == null || _identity!.userId != userId || _identity!.userHash != userHash || _identity!.atlasId != atlasId;
+
+      if (hasSwitched) {
         await _setAtlasIdentity(
             AtlasIdentity(
               atlasId: atlasId,
