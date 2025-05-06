@@ -287,11 +287,6 @@ class AtlasSDK {
       throw Exception(errorMessage);
     }
 
-    // Check if user data has changed
-    bool hasChanged = _identity == null || _identity!.userId != userId || _identity!.userHash != userHash;
-
-    if (!hasChanged) return;
-
     return login(
             appId: appId,
             userId: userId,
@@ -308,7 +303,10 @@ class AtlasSDK {
         throw Exception(errorMessage);
       }
 
-      if (_identity?.atlasId != atlasId) {
+      // Check if user identity was switched
+      bool hasSwitched = _identity == null || _identity!.userId != userId || _identity!.userHash != userHash || _identity!.atlasId != atlasId;
+
+      if (hasSwitched) {
         await _setAtlasIdentity(
             AtlasIdentity(
               atlasId: atlasId,
@@ -325,7 +323,7 @@ class AtlasSDK {
     });
   }
 
-  Future<void> updateCustomFields(String ticketId, Map<String, dynamic> customFields) async {
+  static Future<void> updateCustomFields(String ticketId, Map<String, dynamic> customFields) async {
     var appId = _appId;
     if (appId == null || appId == "") {
       var errorMessage = "AtlasSupportSDK: Cannot call updateCustomFields() without App ID set";
